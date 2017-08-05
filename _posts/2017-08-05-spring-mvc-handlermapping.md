@@ -4,23 +4,24 @@ published: true
 title: Spring MVC-HandlerMapping
 ---
 ## HandlerMapping 继承关系
-	HandlerMapping
-    只有一个方法：通过request获取handler
-    HandlerExecutionChain getHandler(HttpServletRequest request)
+	**HandlerMapping**
+	只有一个方法：通过request获取handler
+	HandlerExecutionChain getHandler(HttpServletRequest request)
  	  --AbstractHandlerMapping
     	--AbstractUrlHandlerMapping
     	  --SimpleUrlHandlerMapping
           --AbstractDetectingUrlHandlerMapping
             --BeanNameUrlHandlerMapping
             --AbstractControllerUrlHandlerMapping
+
         层次清晰：
         首先在AbstractUrlHandlerMapping中设计了整体的结构，并完成了查找Handler的具体逻辑，其中需要提供一个保存url和Handler的对应关系的Map，这个map的内容是留给子类实现的，这里提供了注册方法：registerHandler。
         初始化map有两种方法：SimpleUrlHandlerMapping通过手动在配置文件里注册
         AbstractDetectingUrlHandlerMapping在spring容器里查找。查找分两类
-        
+      --AbstractHandlerMapping  
         --AbstractHanlderMethodMapping
-          --
-          -- 
+          --RequestMappingInfoHandlerMapping
+          	--RequestMappingHandlerMapping
    
 ### AbstractHandlerMapping----HandlerMapping的抽象实现
 	 --getHandler方法实现
@@ -45,7 +46,6 @@ title: Spring MVC-HandlerMapping
 ##### AbstractDetectingUrlHandlerMapping----AbstractUrlHandlerMapping子类
 	--调用registerHandler是在initAppilicationContext中调用的detectHandlers
     
-###### 
 	
  
     
