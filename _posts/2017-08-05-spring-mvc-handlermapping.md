@@ -29,7 +29,8 @@ title: Spring MVC-HandlerMapping
 - ----------BeanNameUrlHandlerMapping
 - ----------AbstractControllerUrlHandlerMapping
 
-**层次清晰：
+**总结，_较少用_
+层次比较清晰，一层套一层：
         首先在AbstractUrlHandlerMapping中设计了整体的结构，并完成了查找Handler的具体逻辑，其中需要提供一个保存url和Handler的对应关系的Map，这个map的内容是留给子类实现的，这里提供了注册方法：registerHandler。
         初始化map有两种方法：SimpleUrlHandlerMapping通过手动在配置文件里注册
         AbstractDetectingUrlHandlerMapping在spring容器里查找。查找分两类**
@@ -59,7 +60,11 @@ title: Spring MVC-HandlerMapping
 - ------RequestMappingInfoHandlerMapping
 - --------RequestMappingHandlerMapping
 
+**总结，_常用_
+层次比较清晰：**
 
+### AbstractHanlderMethodMapping----AbstractHandlerMapping的子类
+	--getHandlerInternal来获取handler
 
 	
  
