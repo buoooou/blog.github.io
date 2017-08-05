@@ -4,7 +4,7 @@
 # baseurl is the website's URL without the hostname
 
 # If you are building a simple GitHub user page (http://username.github.io) then use these settings:
-url: "https://zhangkuo921112.github.io/blos/"
+url: "http://zhangkuo921112.github.io"
 baseurl: ""
 
 # If you are building a GitHub project page then use these settings:
@@ -25,7 +25,9 @@ description: A virtual proof that name is awesome!
 navbar-links:
   About Me: "aboutme"
   Resources:
-    - weibo Pages: "http://weibo.com/u/2814597494"
+    - Beautiful Jekyll: "http://deanattali.com/beautiful-jekyll/"
+    - Learn markdown: "http://www.markdowntutorial.com/"
+    - weibo Pages: "https://pages.github.com/"
     - github Pages: "https://github.com/zhangkuo921112"
 
 # Image to show in the navigation bar - image must be a square (width = height)
@@ -84,7 +86,7 @@ share-links-active:
 
 # How to display the link to the website in the footer
 # Remove this if you don't want a link in the footer
-url-pretty: "zhangkuo921112/blogs"  # eg. "deanattali.com/beautiful-jekyll"
+url-pretty: "zhangkuo921112/zhangkuo921112.github.io"  # eg. "deanattali.com/beautiful-jekyll"
 
 # --- Misc --- #
 # Fill in your Disqus shortname (NOT the userid) if you want to support Disqus comments
