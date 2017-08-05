@@ -1,6 +1,6 @@
 ---
 layout: post
-published: false
+published: true
 title: Spring MVC 架构
 ---
 # 整体结构
