@@ -19,8 +19,8 @@ title: Spring MVC-HandlerMapping
 - --AbstractUrlHandlerMapping
 - --AbstractHanlderMethodMapping
 
-**下面分两大类讲handlerMapping实现**
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------**下面分两大类讲handlerMapping实现**---------------------------------------------------------------------------------------------------------------------------------------------------------
 
 - --AbstractHandlerMapping  
 - ----AbstractHanlderMethodMapping
@@ -33,6 +33,7 @@ title: Spring MVC-HandlerMapping
 ### AbstractHanlderMethodMapping----AbstractHandlerMapping的子类
 	--getHandlerInternal来获取handler
 	
+    
 ### RequestMappingInfoHandlerMapping----AbstractHanlderMethodMapping的子类
 
       
