@@ -20,6 +20,7 @@ title: Spring MVC-HandlerMapping
 - --AbstractHanlderMethodMapping
 
 **下面分两大类讲handlerMapping实现**
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 - --AbstractHandlerMapping  
 - ----AbstractHanlderMethodMapping
@@ -36,6 +37,9 @@ title: Spring MVC-HandlerMapping
 
       
 ### RequestMappingHandlerMapping----RequestMappingInfoHandlerMapping的子类
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 - --AbstractHandlerMapping
 - ----AbstractUrlHandlerMapping
@@ -65,6 +69,3 @@ title: Spring MVC-HandlerMapping
 
 ### AbstractDetectingUrlHandlerMapping----AbstractUrlHandlerMapping子类
 	--调用registerHandler是在initAppilicationContext中调用的detectHandlers
-    
-
-    
