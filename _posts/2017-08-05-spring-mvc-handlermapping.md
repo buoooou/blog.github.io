@@ -32,13 +32,12 @@ title: Spring MVC-HandlerMapping
 
 ### AbstractHanlderMethodMapping----AbstractHandlerMapping的子类
 	--getHandlerInternal来获取handler
-	--
+	----根据request获取lookupPath
+    ----根据lookupPath和request获取HandlerMethod
+    ----
     
-### RequestMappingInfoHandlerMapping----AbstractHanlderMethodMapping的子类
-
-      
+### RequestMappingInfoHandlerMapping----AbstractHanlderMethodMapping的子类 
 ### RequestMappingHandlerMapping----RequestMappingInfoHandlerMapping的子类
-
 
 -------------------------------------------------------------------------------------------------------------
 
