@@ -1,7 +1,7 @@
 ---
 layout: post
 published: true
-title: Interpreter（少用）
+title: Interpreter解释器模式（少用）
 ---
 # 解释器模式(Interpreter)
 
