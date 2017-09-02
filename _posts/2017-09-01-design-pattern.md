@@ -1,7 +1,7 @@
 ---
 layout: post
 published: true
-title: Design pattern
+title: Design pattern设计模式
 ---
 # 设计模式
 
