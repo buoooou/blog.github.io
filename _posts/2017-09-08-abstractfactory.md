@@ -17,101 +17,70 @@ title: AbstractFactory抽象工厂模式
   
 ## DEMO
 
-    /**
-     * 产品的抽象接口  人类
-     * @author liaowp
-     *
-     */
-    public interface Human {
-
-        public void say();
-
-    }
-    
-    /**
-     * man  男人
-     * @author liaowp
-     *
-     */
-    public class Man implements Human {
-
-        /* say method
-         * @see com.roc.factory.Human#say()
-         */
-        @Override
-        public void say() {
-            System.out.println("男人");
-        }
-
+    //抽象工厂角色
+    public interface AbstractFactory{
+      public ProductA createProductA();
+      public ProductB createProductB();
     }
 
-	/**女人
-     * @author liaowp
-     *
-     */
-    public class Woman implements Human {
-
-        /* say method
-         * @see com.roc.factory.Human#say()
-         */
-        @Override
-        public void say() {
-            System.out.println("女人");
-        }
-
-    }
-    
-    /**
-     * 工厂接口类
-     * @author liaowp
-     *
-     */
-    public interface Factory {
-
-        public Human crateMan();
-
-    }
-    
-    /**
-     * 创造男人工厂类
-     * @author liaowp
-     *
-     */
-    public class ManFactory implements Factory{
-
-        public Human crateMan() {
-            return new Man();
-        }
-
+    //抽象产品类A
+    public interface AbstractProductA
+    {
     }
 
-    /**
-     * 创造女人工厂类
-     * @author liaowp
-     *
-     */
-    public class WomanFactory implements Factory{
-
-        @Override
-        public Human crateMan() {
-            // TODO Auto-generated method stub
-            return new Woman();
-        }
-
+    //抽象产品类B
+    public interface AbstractProductB
+    {
     }
-    
-    ／**
-     * 抽象工厂测试
-     * @author liaowp
-     *
-     */
-    public class Client {
-        public static void main(String[] args) {    
-            Factory factory=new ManFactory();
-            Human  man2=factory.crateMan();
-            man2.say();
 
+    //具体产品类ProdcutA1
+    public class ProductA1 implements AbstractProductA 
+    {
+      public ProductA1()
+      {
+      }
+    }
+
+    //具体产品类ProdcutA2
+    public class ProductA2 implements AbstractProductA
+    {
+      public ProductA2()
+      {
+      }
+    }
+
+    //具体产品类ProductB1
+    public class ProductB1 implements AbstractProductB
+    {
+      public ProductB1()
+      {
+      }
+    } 
+
+    //具体产品类ProductB2
+    public class ProductB2 implements AbstractProductB
+    {
+      public ProductB2()
+      {
+      }
+    }
+
+    //具体工厂类1
+    public class ConcreteFactory1 implements AbstractFactory{
+      public AbstractProductA createProductA(){
+      return new ProductA1();
+      }
+      public AbstractProductB createProductB(){
+      return new ProductB1();
         }
     }
-    
-    
+
+    //具体工厂类2
+    public class ConcreteFactory2 implements Creator{
+      public AbstractProductA createProductA(){
+      return new ProductA2();
+      }
+      public AbstractProductB createProductB(){
+      return new ProductB2();
+      }
+    } 
