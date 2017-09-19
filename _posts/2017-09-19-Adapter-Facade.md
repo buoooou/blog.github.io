@@ -1,7 +1,7 @@
 ---
 layout: post
 published: true
-title: Adapter、Facade适配器模式、外观模式的区别
+title: 适配器模式、外观模式的区别
 ---
 # 适配器模式、外观模式的区别
 
