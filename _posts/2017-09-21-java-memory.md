@@ -1,6 +1,6 @@
 ---
 layout: post
-published: false
+published: true
 title: Java memory内存管理
 ---
 # Java内存管理
@@ -72,7 +72,6 @@ OutOfMemoryError异常。
  
 ![2012101820441174.jpg]({{site.baseurl}}/img/2012101820441174.jpg)
 
-　　　　　　
 
 　　如果使用的是直接指针访问方式，Java 堆对象的布局中就必须考虑如何放置访问类型数据的相关信息，reference中直接存储的就是对象地址，如下图所示：
 
