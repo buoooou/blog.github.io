@@ -1,6 +1,6 @@
 ---
 layout: post
-published: false
+published: true
 title: java program warning
 ---
 # 如何把程序写得更健壮：
