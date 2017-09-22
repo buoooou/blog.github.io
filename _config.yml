@@ -101,7 +101,7 @@ url-pretty: "zhangkuo921112/blog.github.io"  # eg. "deanattali.com/beautiful-jek
 
 # Excerpt Word Length
 # Truncates the excerpt to the specified number of words on the index page
-excerpt_length: 50
+excerpt_length: 500
 
 # Character used to separate site title and description in HTML document title
 # and RSS feed title
@@ -114,7 +114,7 @@ timezone: "America/Vancouver"
 markdown: kramdown
 highlighter: rouge
 permalink: /:year-:month-:day-:title/
-paginate: 5
+paginate: 10
 
 kramdown:
   input: GFM
