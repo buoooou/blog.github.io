@@ -23,11 +23,11 @@ ConcurrentHashMap中的分段锁称为Segment，它即类似于HashMap（JDK7与
 
 http://my.oschina.net/hosee/blog/618953
 
-static final class HashEntry<K,V> {
-        final int hash;
-        final K key;
-        volatile V value;
-        volatile HashEntry<K,V> next;
+    static final class HashEntry<K,V> {
+            final int hash;
+            final K key;
+            volatile V value;
+            volatile HashEntry<K,V> next;
 
 ### 1.2 并发度（Concurrency Level）
 
@@ -41,15 +41,15 @@ static final class HashEntry<K,V> {
 
 ensureSegment可能在并发环境下被调用，但与想象中不同，ensureSegment并未使用锁来控制竞争，而是使用了Unsafe对象的getObjectVolatile()提供的原子读语义结合CAS来确保Segment创建的原子性。代码段如下：
 
-if ((seg = (Segment<K,V>)UNSAFE.getObjectVolatile(ss, u))
-                == null) { // recheck
-                Segment<K,V> s = new Segment<K,V>(lf, threshold, tab);
-                while ((seg = (Segment<K,V>)UNSAFE.getObjectVolatile(ss, u))
-                       == null) {
-                    if (UNSAFE.compareAndSwapObject(ss, u, null, seg = s))
-                        break;
-                }
-}
+    if ((seg = (Segment<K,V>)UNSAFE.getObjectVolatile(ss, u))
+                    == null) { // recheck
+                    Segment<K,V> s = new Segment<K,V>(lf, threshold, tab);
+                    while ((seg = (Segment<K,V>)UNSAFE.getObjectVolatile(ss, u))
+                           == null) {
+                        if (UNSAFE.compareAndSwapObject(ss, u, null, seg = s))
+                            break;
+                    }
+    }
 
 ### 1.4 put/putIfAbsent/putAll
 
@@ -67,50 +67,50 @@ put方法中，链接新节点的下一个节点（HashEntry.setNext()）以及�
 
 相对于HashMap的resize，ConcurrentHashMap的rehash原理类似，但是Doug Lea为rehash做了一定的优化，避免让所有的节点都进行复制操作：由于扩容是基于2的幂指来操作，假设扩容前某HashEntry对应到Segment中数组的index为i，数组的容量为capacity，那么扩容后该HashEntry对应到新数组中的index只可能为i或者i+capacity，因此大多数HashEntry节点在扩容前后index可以保持不变。基于此，rehash方法中会定位第一个后续所有节点在扩容后index都保持不变的节点，然后将这个节点之前的所有节点重排即可。这部分代码如下：
 
-private void rehash(HashEntry<K,V> node) {
-           HashEntry<K,V>[] oldTable = table;
-           int oldCapacity = oldTable.length;
-           int newCapacity = oldCapacity << 1;
-           threshold = (int)(newCapacity * loadFactor);
-           HashEntry<K,V>[] newTable =
-               (HashEntry<K,V>[]) new HashEntry[newCapacity];
-           int sizeMask = newCapacity - 1;
-           for (int i = 0; i < oldCapacity ; i++) {
-               HashEntry<K,V> e = oldTable[i];
-               if (e != null) {
-                   HashEntry<K,V> next = e.next;
-                   int idx = e.hash & sizeMask;
-                   if (next == null)   //  Single node on list
-                       newTable[idx] = e;
-                   else { // Reuse consecutive sequence at same slot
-                       HashEntry<K,V> lastRun = e;
-                       int lastIdx = idx;
-                       for (HashEntry<K,V> last = next;
-                            last != null;
-                            last = last.next) {
-                           int k = last.hash & sizeMask;
-                           if (k != lastIdx) {
-                               lastIdx = k;
-                               lastRun = last;
+    private void rehash(HashEntry<K,V> node) {
+               HashEntry<K,V>[] oldTable = table;
+               int oldCapacity = oldTable.length;
+               int newCapacity = oldCapacity << 1;
+               threshold = (int)(newCapacity * loadFactor);
+               HashEntry<K,V>[] newTable =
+                   (HashEntry<K,V>[]) new HashEntry[newCapacity];
+               int sizeMask = newCapacity - 1;
+               for (int i = 0; i < oldCapacity ; i++) {
+                   HashEntry<K,V> e = oldTable[i];
+                   if (e != null) {
+                       HashEntry<K,V> next = e.next;
+                       int idx = e.hash & sizeMask;
+                       if (next == null)   //  Single node on list
+                           newTable[idx] = e;
+                       else { // Reuse consecutive sequence at same slot
+                           HashEntry<K,V> lastRun = e;
+                           int lastIdx = idx;
+                           for (HashEntry<K,V> last = next;
+                                last != null;
+                                last = last.next) {
+                               int k = last.hash & sizeMask;
+                               if (k != lastIdx) {
+                                   lastIdx = k;
+                                   lastRun = last;
+                               }
                            }
-                       }
-                       newTable[lastIdx] = lastRun;
-                       // Clone remaining nodes
-                       for (HashEntry<K,V> p = e; p != lastRun; p = p.next) {
-                           V v = p.value;
-                           int h = p.hash;
-                           int k = h & sizeMask;
-                           HashEntry<K,V> n = newTable[k];
-                           newTable[k] = new HashEntry<K,V>(h, p.key, v, n);
+                           newTable[lastIdx] = lastRun;
+                           // Clone remaining nodes
+                           for (HashEntry<K,V> p = e; p != lastRun; p = p.next) {
+                               V v = p.value;
+                               int h = p.hash;
+                               int k = h & sizeMask;
+                               HashEntry<K,V> n = newTable[k];
+                               newTable[k] = new HashEntry<K,V>(h, p.key, v, n);
+                           }
                        }
                    }
                }
+               int nodeIndex = node.hash & sizeMask; // add the new node
+               node.setNext(newTable[nodeIndex]);
+               newTable[nodeIndex] = node;
+               table = newTable;
            }
-           int nodeIndex = node.hash & sizeMask; // add the new node
-           node.setNext(newTable[nodeIndex]);
-           newTable[nodeIndex] = node;
-           table = newTable;
-       }
 
 ### 1.6 remove
 
@@ -126,9 +126,9 @@ get与containsKey两个方法几乎完全一致：他们都没有使用锁，而
 
 当循环次数超过预定义的值时，这时需要对所有的Segment依次进行加锁，获取返回值后再依次解锁。值得注意的是，加锁过程中要强制创建所有的Segment，否则容易出现其他线程创建Segment并进行put，remove等操作。代码如下：
 
-for(int j =0; j < segments.length; ++j)
- 
-ensureSegment(j).lock();// force creation
+    for(int j =0; j < segments.length; ++j)
+
+    ensureSegment(j).lock();// force creation
 
 一般来说，应该避免在多线程环境下使用size和containsValue方法。
 
@@ -153,43 +153,43 @@ ConcurrentHashMap在JDK8中进行了巨大改动，很需要通过源码来再�
 -N 表示有N-1个线程正在进行扩容操作
 正数或0代表hash表还没有被初始化，这个数值表示初始化或下一次进行扩容的大小，这一点类似于扩容阈值的概念。还后面可以看到，它的值始终是当前ConcurrentHashMap容量的0.75倍，这与loadfactor是对应的。
 
-/**
-     * 盛装Node元素的数组 它的大小是2的整数次幂
-     * Size is always a power of two. Accessed directly by iterators.
-     */
-    transient volatile Node<K,V>[] table;
- 
-        /**
-     * Table initialization and resizing control.  When negative, the
-     * table is being initialized or resized: -1 for initialization,
-     * else -(1 + the number of active resizing threads).  Otherwise,
-     * when table is null, holds the initial table size to use upon
-     * creation, or 0 for default. After initialization, holds the
-     * next element count value upon which to resize the table.
-     hash表初始化或扩容时的一个控制位标识量。
-     负数代表正在进行初始化或扩容操作
-     -1代表正在初始化
-     -N 表示有N-1个线程正在进行扩容操作
-     正数或0代表hash表还没有被初始化，这个数值表示初始化或下一次进行扩容的大小
- 
-     */
-    private transient volatile int sizeCtl; 
-    // 以下两个是用来控制扩容的时候 单线程进入的变量
-     /**
-     * The number of bits used for generation stamp in sizeCtl.
-     * Must be at least 6 for 32bit arrays.
-     */
-    private static int RESIZE_STAMP_BITS = 16;
-        /**
-     * The bit shift for recording size stamp in sizeCtl.
-     */
-    private static final int RESIZE_STAMP_SHIFT = 32 - RESIZE_STAMP_BITS;
- 
-    /*
-     * Encodings for Node hash fields. See above for explanation.
-     */
-    static final int MOVED     = -1; // hash值是-1，表示这是一个forwardNode节点
-    static final int TREEBIN   = -2; // hash值是-2  表示这时一个TreeBin节点
+    	/**
+         * 盛装Node元素的数组 它的大小是2的整数次幂
+         * Size is always a power of two. Accessed directly by iterators.
+         */
+        transient volatile Node<K,V>[] table;
+
+            /**
+         * Table initialization and resizing control.  When negative, the
+         * table is being initialized or resized: -1 for initialization,
+         * else -(1 + the number of active resizing threads).  Otherwise,
+         * when table is null, holds the initial table size to use upon
+         * creation, or 0 for default. After initialization, holds the
+         * next element count value upon which to resize the table.
+         hash表初始化或扩容时的一个控制位标识量。
+         负数代表正在进行初始化或扩容操作
+         -1代表正在初始化
+         -N 表示有N-1个线程正在进行扩容操作
+         正数或0代表hash表还没有被初始化，这个数值表示初始化或下一次进行扩容的大小
+
+         */
+        private transient volatile int sizeCtl; 
+        // 以下两个是用来控制扩容的时候 单线程进入的变量
+         /**
+         * The number of bits used for generation stamp in sizeCtl.
+         * Must be at least 6 for 32bit arrays.
+         */
+        private static int RESIZE_STAMP_BITS = 16;
+            /**
+         * The bit shift for recording size stamp in sizeCtl.
+         */
+        private static final int RESIZE_STAMP_SHIFT = 32 - RESIZE_STAMP_BITS;
+
+        /*
+         * Encodings for Node hash fields. See above for explanation.
+         */
+        static final int MOVED     = -1; // hash值是-1，表示这是一个forwardNode节点
+        static final int TREEBIN   = -2; // hash值是-2  表示这时一个TreeBin节点
 
 ### 2.2 重要的类
 
@@ -211,7 +211,7 @@ Node是最核心的内部类，它包装了key-value键值对，所有插入Conc
 
 一个用于连接两个table的节点类。它包含一个nextTable指针，用于指向下一张表。而且这个节点的key value next指针全部为null，它的hash值为-1. 这里面定义的find的方法是从nextTable里进行查询节点，而不是以自身为头节点进行查找。
 
-/**
+	/**
      * A node inserted at head of bins during transfer operations.
      */
     static final class ForwardingNode<K,V> extends Node<K,V> {
@@ -256,40 +256,40 @@ Node是最核心的内部类，它包装了key-value键值对，所有插入Conc
 
 unsafe代码块控制了一些属性的修改工作，比如最常用的SIZECTL 。在这一版本的concurrentHashMap中，大量应用来的CAS方法进行变量、属性的修改工作。利用CAS进行无锁操作，可以大大提高性能。
 
-private static final sun.misc.Unsafe U;
-   private static final long SIZECTL;
-   private static final long TRANSFERINDEX;
-   private static final long BASECOUNT;
-   private static final long CELLSBUSY;
-   private static final long CELLVALUE;
-   private static final long ABASE;
-   private static final int ASHIFT;
- 
-   static {
-       try {
-           U = sun.misc.Unsafe.getUnsafe();
-           Class<?> k = ConcurrentHashMap.class;
-           SIZECTL = U.objectFieldOffset
-               (k.getDeclaredField("sizeCtl"));
-           TRANSFERINDEX = U.objectFieldOffset
-               (k.getDeclaredField("transferIndex"));
-           BASECOUNT = U.objectFieldOffset
-               (k.getDeclaredField("baseCount"));
-           CELLSBUSY = U.objectFieldOffset
-               (k.getDeclaredField("cellsBusy"));
-           Class<?> ck = CounterCell.class;
-           CELLVALUE = U.objectFieldOffset
-               (ck.getDeclaredField("value"));
-           Class<?> ak = Node[].class;
-           ABASE = U.arrayBaseOffset(ak);
-           int scale = U.arrayIndexScale(ak);
-           if ((scale & (scale - 1)) != 0)
-               throw new Error("data type scale not a power of two");
-           ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
-       } catch (Exception e) {
-           throw new Error(e);
+    private static final sun.misc.Unsafe U;
+       private static final long SIZECTL;
+       private static final long TRANSFERINDEX;
+       private static final long BASECOUNT;
+       private static final long CELLSBUSY;
+       private static final long CELLVALUE;
+       private static final long ABASE;
+       private static final int ASHIFT;
+
+       static {
+           try {
+               U = sun.misc.Unsafe.getUnsafe();
+               Class<?> k = ConcurrentHashMap.class;
+               SIZECTL = U.objectFieldOffset
+                   (k.getDeclaredField("sizeCtl"));
+               TRANSFERINDEX = U.objectFieldOffset
+                   (k.getDeclaredField("transferIndex"));
+               BASECOUNT = U.objectFieldOffset
+                   (k.getDeclaredField("baseCount"));
+               CELLSBUSY = U.objectFieldOffset
+                   (k.getDeclaredField("cellsBusy"));
+               Class<?> ck = CounterCell.class;
+               CELLVALUE = U.objectFieldOffset
+                   (ck.getDeclaredField("value"));
+               Class<?> ak = Node[].class;
+               ABASE = U.arrayBaseOffset(ak);
+               int scale = U.arrayIndexScale(ak);
+               if ((scale & (scale - 1)) != 0)
+                   throw new Error("data type scale not a power of two");
+               ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
+           } catch (Exception e) {
+               throw new Error(e);
+           }
        }
-   }
 
 **2.3.2 三个核心方法**
 
@@ -302,14 +302,15 @@ ConcurrentHashMap定义了三个原子操作，用于对指定位置的节点进
         //利用CAS算法设置i位置上的Node节点。之所以能实现并发是因为他指定了原来这个节点的值是多少
         //在CAS算法中，会比较内存中的值与你指定的这个值是否相等，如果相等才接受你的修改，否则拒绝你的修改
         //因此当前线程中的值并不是最新的值，这种修改可能会覆盖掉其他线程的修改结果  有点类似于SVN
-    static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
-                                        Node<K,V> c, Node<K,V> v) {
-        return U.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
-    }
-        //利用volatile方法设置节点位置的值
-    static final <K,V> void setTabAt(Node<K,V>[] tab, int i, Node<K,V> v) {
-        U.putObjectVolatile(tab, ((long)i << ASHIFT) + ABASE, v);
-    }
+        
+        static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
+                                            Node<K,V> c, Node<K,V> v) {
+            return U.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
+        }
+            //利用volatile方法设置节点位置的值
+        static final <K,V> void setTabAt(Node<K,V>[] tab, int i, Node<K,V> v) {
+            U.putObjectVolatile(tab, ((long)i << ASHIFT) + ABASE, v);
+        }
 
 ### 2.4 初始化方法initTable
 
@@ -317,7 +318,7 @@ ConcurrentHashMap定义了三个原子操作，用于对指定位置的节点进
 
 初始化方法主要应用了关键属性sizeCtl 如果这个值〈0，表示其他线程正在进行初始化，就放弃这个操作。在这也可以看出ConcurrentHashMap的初始化只能由一个线程完成。如果获得了初始化权限，就用CAS方法将sizeCtl置为-1，防止其他线程进入。初始化数组后，将sizeCtl的值改为0.75*n。
 
-/**
+	/**
      * Initializes table, using the size recorded in sizeCtl.
      */
     private final Node<K,V>[] initTable() {
