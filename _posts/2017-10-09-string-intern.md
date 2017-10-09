@@ -1,6 +1,6 @@
 ---
 layout: post
-published: false
+published: true
 title: String的intern方法简介
 ---
 
@@ -49,64 +49,6 @@ public native String intern();
 String#intern方法中看到，这个方法是一个 native 的方法，但注释写的非常明了。“如果常量池中存在当前字符串, 就会直接返回当前字符串. 如果常量池中没有此字符串, 会将此字符串放入常量池中后, 再返回”。
 
 2 native 代码
-
-在 jdk7后，oracle 接管了 JAVA 的源码后就不对外开放了，根据 jdk 的主要开发人员声明 openJdk7 和 jdk7 使用的是同一分主代码，只是分支代码会有些许的变动。所以可以直接跟踪 openJdk7 的源码来探究 intern 的实现。
-
-native实现代码:
-\openjdk7\jdk\src\share\native\java\lang\String.c
-
-Java_java_lang_String_intern(JNIEnv *env, jobject this)  
-{  
-    return JVM_InternString(env, this);  
-}
-
-\openjdk7\hotspot\src\share\vm\prims\jvm.h
-
-/* 
-* java.lang.String 
-*/ 
-JNIEXPORT jstring JNICALL  
-JVM_InternString(JNIEnv *env, jstring str);
-
-\openjdk7\hotspot\src\share\vm\prims\jvm.cpp
-
-// String support ///////////////////////////////////////////////////////////////////////////  
-JVM_ENTRY(jstring, JVM_InternString(JNIEnv *env, jstring str))  
-  JVMWrapper("JVM_InternString");  
-  JvmtiVMObjectAllocEventCollector oam;  
-  if (str == NULL) return NULL;  
-  oop string = JNIHandles::resolve_non_null(str);  
-  oop result = StringTable::intern(string, CHECK_NULL);
-  return (jstring) JNIHandles::make_local(env, result);  
-JVM_END
-
-\openjdk7\hotspot\src\share\vm\classfile\symbolTable.cpp
-
-oop StringTable::intern(Handle string_or_null, jchar* name,  
-                        int len, TRAPS) {  
-  unsigned int hashValue = java_lang_String::hash_string(name, len);  
-  int index = the_table()->hash_to_index(hashValue);  
-  oop string = the_table()->lookup(index, name, len, hashValue);  
-  // Found  
-  if (string != NULL) return string;  
-  // Otherwise, add to symbol to table  
-  return the_table()->basic_add(index, string_or_null, name, len,  
-                                hashValue, CHECK_NULL);  
-}
-
-\openjdk7\hotspot\src\share\vm\classfile\symbolTable.cpp
-
-oop StringTable::lookup(int index, jchar* name,  
-                        int len, unsigned int hash) {  
-  for (HashtableEntry<oop>* l = bucket(index); l != NULL; l = l->next()) {  
-    if (l->hash() == hash) {  
-      if (java_lang_String::equals(l->literal(), name, len)) {  
-        return l->literal();  
-      }  
-    }  
-  }  
-  return NULL;  
-}
 
 它的大体实现结构就是:
 JAVA 使用 jni 调用c++实现的StringTable的intern方法, StringTable的intern方法跟Java中的HashMap的实现是差不多的, 只是不能自动扩容。默认大小是1009。
