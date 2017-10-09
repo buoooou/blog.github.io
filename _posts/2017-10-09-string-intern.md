@@ -3,8 +3,7 @@ layout: post
 published: true
 title: String的intern方法简介
 ---
-
-引言
+# 引言
 
 在 JAVA 语言中有8中基本类型和一种比较特殊的类型String。这些类型为了使他们在运行过程中速度更快，更节省内存，都提供了一种常量池的概念。常量池就类似一个JAVA系统级别提供的缓存。
 
@@ -15,40 +14,40 @@ title: String的intern方法简介
 
 接下来我们主要来谈一下String.intern方法。
 
-一 intern 的实现原理
+## 一、intern 的实现原理
 
 首先深入看一下它的实现原理。
 
-1 JAVA 代码
+### 1 JAVA 代码
 
-/** 
- * Returns a canonical representation for the string object. 
- * <p> 
- * A pool of strings, initially empty, is maintained privately by the 
- * class <code>String</code>. 
- * <p> 
- * When the intern method is invoked, if the pool already contains a 
- * string equal to this <code>String</code> object as determined by 
- * the {@link #equals(Object)} method, then the string from the pool is 
- * returned. Otherwise, this <code>String</code> object is added to the 
- * pool and a reference to this <code>String</code> object is returned. 
- * <p> 
- * It follows that for any two strings <code>s</code> and <code>t</code>, 
- * <code>s.intern() == t.intern()</code> is <code>true</code> 
- * if and only if <code>s.equals(t)</code> is <code>true</code>. 
- * <p> 
- * All literal strings and string-valued constant expressions are 
- * interned. String literals are defined in section 3.10.5 of the 
- * <cite>The Java™ Language Specification</cite>. 
- * 
- * @return  a string that has the same contents as this string, but is 
- *          guaranteed to be from a pool of unique strings. 
- */ 
-public native String intern();
+    /** 
+     * Returns a canonical representation for the string object. 
+     * <p> 
+     * A pool of strings, initially empty, is maintained privately by the 
+     * class <code>String</code>. 
+     * <p> 
+     * When the intern method is invoked, if the pool already contains a 
+     * string equal to this <code>String</code> object as determined by 
+     * the {@link #equals(Object)} method, then the string from the pool is 
+     * returned. Otherwise, this <code>String</code> object is added to the 
+     * pool and a reference to this <code>String</code> object is returned. 
+     * <p> 
+     * It follows that for any two strings <code>s</code> and <code>t</code>, 
+     * <code>s.intern() == t.intern()</code> is <code>true</code> 
+     * if and only if <code>s.equals(t)</code> is <code>true</code>. 
+     * <p> 
+     * All literal strings and string-valued constant expressions are 
+     * interned. String literals are defined in section 3.10.5 of the 
+     * <cite>The Java™ Language Specification</cite>. 
+     * 
+     * @return  a string that has the same contents as this string, but is 
+     *          guaranteed to be from a pool of unique strings. 
+     */ 
+    public native String intern();
 
 String#intern方法中看到，这个方法是一个 native 的方法，但注释写的非常明了。“如果常量池中存在当前字符串, 就会直接返回当前字符串. 如果常量池中没有此字符串, 会将此字符串放入常量池中后, 再返回”。
 
-2 native 代码
+### 2 native 代码
 
 它的大体实现结构就是:
 JAVA 使用 jni 调用c++实现的StringTable的intern方法, StringTable的intern方法跟Java中的HashMap的实现是差不多的, 只是不能自动扩容。默认大小是1009。
@@ -59,7 +58,7 @@ JAVA 使用 jni 调用c++实现的StringTable的intern方法, StringTable的inte
 
 -XX:StringTableSize=99991
 
-二 jdk6 和 jdk7 下 intern 的区别
+## 二 jdk6 和 jdk7 下 intern 的区别
 
 相信很多 JAVA 程序员都做做类似 String s = new String("abc")这个语句创建了几个对象的题目。 这种题目主要就是为了考察程序员对字符串对象的常量池掌握与否。上述的语句中是创建了2个对象，第一个对象是”abc”字符串存储在常量池中，第二个对象在JAVA Heap中的 String 对象。
 
@@ -101,14 +100,14 @@ public static void main(String[] args) {
 jdk6 下false false
 jdk7 下false false
 
-1 jdk6中的解释
-jdk6
+### 1 jdk6中的解释
+
 
 注：图中绿色线条代表 string 对象的内容指向。 黑色线条代表地址指向。
 
 如上图所示。首先说一下 jdk6中的情况，在 jdk6中上述的所有打印都是 false 的，因为 jdk6中的常量池是放在 Perm 区中的，Perm 区和正常的 JAVA Heap 区域是完全分开的。上面说过如果是使用引号声明的字符串都是会直接在字符串常量池中生成，而 new 出来的 String 对象是放在 JAVA Heap 区域。所以拿一个 JAVA Heap 区域的对象地址和字符串常量池的对象地址进行比较肯定是不相同的，即使调用String.intern方法也是没有任何关系的。
 
-2 jdk7中的解释
+### 2 jdk7中的解释
 
 再说说 jdk7 中的情况。这里要明确一点的是，在 Jdk6 以及以前的版本中，字符串的常量池是放在堆的 Perm 区的，Perm 区是一个类静态的区域，主要存储一些加载类的信息，常量池，方法片段等内容，默认大小只有4m，一旦常量池中大量使用 intern 是会直接产生java.lang.OutOfMemoryError: PermGen space错误的。 所以在 jdk7 的版本中，字符串常量池已经从 Perm 区移到正常的 Java Heap 区域了。为什么要移动，Perm 区域太小是一个主要原因，当然据消息称 jdk8 已经直接取消了 Perm 区域，而新建立了一个元区域。应该是 jdk 开发者认为 Perm 区域已经不适合现在 JAVA 的发展了。
 
@@ -127,16 +126,16 @@ jdk7_1
 来看第二段代码，从上边第二幅图中观察。第一段代码和第二段代码的改变就是 s3.intern(); 的顺序是放在String s4 = "11";后了。这样，首先执行String s4 = "11";声明 s4 的时候常量池中是不存在“11”对象的，执行完毕后，“11“对象是 s4 声明产生的新对象。然后再执行s3.intern();时，常量池中“11”对象已经存在了，因此 s3 和 s4 的引用是不同的。
 第二段代码中的 s 和 s2 代码中，s.intern();，这一句往后放也不会有什么影响了，因为对象池中在执行第一句代码String s = new String("1");的时候已经生成“1”对象了。下边的s2声明都是直接从常量池中取地址引用的。 s 和 s2 的引用地址是不会相等的。
 
-小结
+### 小结
 
 从上述的例子代码可以看出 jdk7 版本对 intern 操作和常量池都做了一定的修改。主要包括2点：
 
 将String常量池 从 Perm 区移动到了 Java Heap区
 String.intern 方法时，如果存在堆中的对象，会直接保存对象的引用，而不会重新创建对象。
 
-三 使用 intern
+## 三 使用 intern
 
-1 intern 正确使用例子
+### 1 intern 正确使用例子
 
 接下来我们来看一下一个比较常见的使用String.intern方法的例子。
 
@@ -175,7 +174,7 @@ without_intern
 
 细心的同学会发现使用了 intern 方法后时间上有了一些增长。这是因为程序中每次都是用了 new String 后，然后又进行 intern 操作的耗时时间，这一点如果在内存空间充足的情况下确实是无法避免的，但我们平时使用时，内存空间肯定不是无限大的，不使用 intern 占用空间导致 jvm 垃圾回收的时间是要远远大于这点时间的。 毕竟这里使用了1000w次intern 才多出来1秒钟多的时间。
 
-2 intern 不当使用
+### 2 intern 不当使用
 
 看过了 intern 的使用和 intern 的原理等，我们来看一个不当使用 intern 操作导致的问题。
 
@@ -222,7 +221,9 @@ public static StackTraceElement calcLocation(final String fqcnOfLogger) {
 
 经过跟踪发现是 Thread.currentThread().getStackTrace(); 的问题。
 
-2 跟踪Thread.currentThread().getStackTrace()的 native 代码，验证String#intern
+### 2 跟踪Thread.currentThread().getStackTrace()的 native 代码，
+
+验证String#intern
 
 Thread.currentThread().getStackTrace();native的方法:
 
@@ -271,7 +272,7 @@ oop filename = StringTable::intern(source, CHECK_0);
 
 这三段代码是获取类名、方法名、和文件名。因为类名、方法名、文件名都是存储在字符串常量池中的，所以每次获取它们都是通过String#intern方法。但没有考虑到的是默认的 StringPool 的长度是1009且不可变的。因此一旦常量池中的字符串达到的一定的规模后，性能会急剧下降。
 
-3 fastjson 不当使用 String#intern
+### 3 fastjson 不当使用 Stringintern
 
 导致这个 intern 变慢的原因是因为 fastjson 对String#intern方法的使用不当造成的。跟踪 fastjson 中的实现代码发现，
 
@@ -312,6 +313,6 @@ if (size >= MAX_SIZE) {
 
 这个问题是70w 数据量时候的引发的，如果是几百万的数据量的话可能就不只是30ms 的问题了。因此在使用系统级提供的String#intern方式一定要慎重！
 
-五 总结
+## 五 总结
 
 本文大体的描述了 String#intern和字符串常量池的日常使用，jdk 版本的变化和String#intern方法的区别，以及不恰当使用导致的危险等内容，让大家对系统级别的 String#intern有一个比较深入的认识。让我们在使用和接触它的时候能避免出现一些 bug，增强系统的健壮性。
