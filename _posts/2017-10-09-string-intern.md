@@ -64,41 +64,41 @@ JAVA 使用 jni 调用c++实现的StringTable的intern方法, StringTable的inte
 
 来看一段代码：
 
-public static void main(String[] args) {
-    String s = new String("1");
-    s.intern();
-    String s2 = "1";
-    System.out.println(s == s2);
- 
-    String s3 = new String("1") + new String("1");
-    s3.intern();
-    String s4 = "11";
-    System.out.println(s3 == s4);
-}
+    public static void main(String[] args) {
+        String s = new String("1");
+        s.intern();
+        String s2 = "1";
+        System.out.println(s == s2);
+
+        String s3 = new String("1") + new String("1");
+        s3.intern();
+        String s4 = "11";
+        System.out.println(s3 == s4);
+    }
 
 打印结果是
 
-jdk6 下false false
-jdk7 下false true
+    jdk6 下false false
+    jdk7 下false true
 
 具体为什么稍后再解释，然后将s3.intern();语句下调一行，放到String s4 = "11";后面。将s.intern(); 放到String s2 = "1";后面。是什么结果呢
 
-public static void main(String[] args) {
-    String s = new String("1");
-    String s2 = "1";
-    s.intern();
-    System.out.println(s == s2);
- 
-    String s3 = new String("1") + new String("1");
-    String s4 = "11";
-    s3.intern();
-    System.out.println(s3 == s4);
-}
+    public static void main(String[] args) {
+        String s = new String("1");
+        String s2 = "1";
+        s.intern();
+        System.out.println(s == s2);
+
+        String s3 = new String("1") + new String("1");
+        String s4 = "11";
+        s3.intern();
+        System.out.println(s3 == s4);
+    }
 
 打印结果为：
 
-jdk6 下false false
-jdk7 下false false
+    jdk6 下false false
+    jdk7 下false false
 
 ### 1 jdk6中的解释
 
@@ -141,34 +141,34 @@ String.intern 方法时，如果存在堆中的对象，会直接保存对象的
 
 代码如下：
 
-static final int MAX = 1000 * 10000;
-static final String[] arr = new String[MAX];
- 
-public static void main(String[] args) throws Exception {
-    Integer[] DB_DATA = new Integer[10];
-    Random random = new Random(10 * 10000);
-    for (int i = 0; i < DB_DATA.length; i++) {
-        DB_DATA[i] = random.nextInt();
+    static final int MAX = 1000 * 10000;
+    static final String[] arr = new String[MAX];
+
+    public static void main(String[] args) throws Exception {
+        Integer[] DB_DATA = new Integer[10];
+        Random random = new Random(10 * 10000);
+        for (int i = 0; i < DB_DATA.length; i++) {
+            DB_DATA[i] = random.nextInt();
+        }
+        long t = System.currentTimeMillis();
+        for (int i = 0; i < MAX; i++) {
+            //arr[i] = new String(String.valueOf(DB_DATA[i % DB_DATA.length]));
+             arr[i] = new String(String.valueOf(DB_DATA[i % DB_DATA.length])).intern();
+        }
+
+        System.out.println((System.currentTimeMillis() - t) + "ms");
+        System.gc();
     }
-    long t = System.currentTimeMillis();
-    for (int i = 0; i < MAX; i++) {
-        //arr[i] = new String(String.valueOf(DB_DATA[i % DB_DATA.length]));
-         arr[i] = new String(String.valueOf(DB_DATA[i % DB_DATA.length])).intern();
-    }
- 
-    System.out.println((System.currentTimeMillis() - t) + "ms");
-    System.gc();
-}
 
 运行的参数是：-Xmx2g -Xms2g -Xmn1500M 上述代码是一个演示代码，其中有两条语句不一样，一条是使用 intern，一条是未使用 intern。结果如下图
 
-2160ms
+    2160ms
 
-with_intern
+    with_intern
 
-826ms
+    826ms
 
-without_intern
+    without_intern
 
 通过上述结果，我们发现不使用 intern 的代码生成了1000w 个字符串，占用了大约640m 空间。 使用了 intern 的代码生成了1345个字符串，占用总空间 133k 左右。其实通过观察程序中只是用到了10个字符串，所以准确计算后应该是正好相差100w 倍。虽然例子有些极端，但确实能准确反应出 intern 使用后产生的巨大空间节省。
 
@@ -184,40 +184,40 @@ without_intern
 
 在使用log4j#info打印日志的时候时间非常长。所以使用 housemd 软件跟踪 info 方法的耗时堆栈。
 
-trace SLF4JLogger.
-trace AbstractLoggerWrapper:
-trace AsyncLogger
+    trace SLF4JLogger.
+    trace AbstractLoggerWrapper:
+    trace AsyncLogger
 
-org/apache/logging/log4j/core/async/AsyncLogger.actualAsyncLog(RingBufferLogEvent)                sun.misc.Launcher$AppClassLoader@109aca82            1            1ms    org.apache.logging.log4j.core.async.AsyncLogger@19de86bb 
-org/apache/logging/log4j/core/async/AsyncLogger.location(String)                                  sun.misc.Launcher$AppClassLoader@109aca82            1           30ms    org.apache.logging.log4j.core.async.AsyncLogger@19de86bb 
-org/apache/logging/log4j/core/async/AsyncLogger.log(Marker, String, Level, Message, Throwable)    sun.misc.Launcher$AppClassLoader@109aca82            1           61ms    org.apache.logging.log4j.core.async.AsyncLogger@19de86bb
+    org/apache/logging/log4j/core/async/AsyncLogger.actualAsyncLog(RingBufferLogEvent)                sun.misc.Launcher$AppClassLoader@109aca82            1            1ms    org.apache.logging.log4j.core.async.AsyncLogger@19de86bb 
+    org/apache/logging/log4j/core/async/AsyncLogger.location(String)                                  sun.misc.Launcher$AppClassLoader@109aca82            1           30ms    org.apache.logging.log4j.core.async.AsyncLogger@19de86bb 
+    org/apache/logging/log4j/core/async/AsyncLogger.log(Marker, String, Level, Message, Throwable)    sun.misc.Launcher$AppClassLoader@109aca82            1           61ms    org.apache.logging.log4j.core.async.AsyncLogger@19de86bb
 
-代码出在 AsyncLogger.location 这个方法上. 里边主要是调用了 return Log4jLogEvent.calcLocation(fqcnOfLogger);和Log4jLogEvent.calcLocation()
+    代码出在 AsyncLogger.location 这个方法上. 里边主要是调用了 return Log4jLogEvent.calcLocation(fqcnOfLogger);和Log4jLogEvent.calcLocation()
 
-Log4jLogEvent.calcLocation()的代码如下:
+    Log4jLogEvent.calcLocation()的代码如下:
 
-public static StackTraceElement calcLocation(final String fqcnOfLogger) {  
-    if (fqcnOfLogger == null) {  
-        return null;  
-    }  
-    final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();  
-    boolean next = false;  
-    for (final StackTraceElement element : stackTrace) {  
-        final String className = element.getClassName();  
-        if (next) {  
-            if (fqcnOfLogger.equals(className)) {  
-                continue;  
+    public static StackTraceElement calcLocation(final String fqcnOfLogger) {  
+        if (fqcnOfLogger == null) {  
+            return null;  
+        }  
+        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();  
+        boolean next = false;  
+        for (final StackTraceElement element : stackTrace) {  
+            final String className = element.getClassName();  
+            if (next) {  
+                if (fqcnOfLogger.equals(className)) {  
+                    continue;  
+                }  
+                return element;  
             }  
-            return element;  
+            if (fqcnOfLogger.equals(className)) {  
+                next = true;  
+            } else if (NOT_AVAIL.equals(className)) {  
+                break;  
+            }  
         }  
-        if (fqcnOfLogger.equals(className)) {  
-            next = true;  
-        } else if (NOT_AVAIL.equals(className)) {  
-            break;  
-        }  
-    }  
-    return null;  
-}
+        return null;  
+    }
 
 经过跟踪发现是 Thread.currentThread().getStackTrace(); 的问题。
 
@@ -225,50 +225,50 @@ public static StackTraceElement calcLocation(final String fqcnOfLogger) {
 
 验证String#intern
 
-Thread.currentThread().getStackTrace();native的方法:
+    Thread.currentThread().getStackTrace();native的方法:
 
-public StackTraceElement[] getStackTrace() {  
-    if (this != Thread.currentThread()) {  
-        // check for getStackTrace permission  
-        SecurityManager security = System.getSecurityManager();  
-        if (security != null) {  
-            security.checkPermission(  
-                SecurityConstants.GET_STACK_TRACE_PERMISSION);  
+    public StackTraceElement[] getStackTrace() {  
+        if (this != Thread.currentThread()) {  
+            // check for getStackTrace permission  
+            SecurityManager security = System.getSecurityManager();  
+            if (security != null) {  
+                security.checkPermission(  
+                    SecurityConstants.GET_STACK_TRACE_PERMISSION);  
+            }  
+            // optimization so we do not call into the vm for threads that  
+            // have not yet started or have terminated  
+            if (!isAlive()) {  
+                return EMPTY_STACK_TRACE;  
+            }        StackTraceElement[][] stackTraceArray = dumpThreads(new Thread[] {this});  
+            StackTraceElement[] stackTrace = stackTraceArray[0];  
+            // a thread that was alive during the previous isAlive call may have  
+            // since terminated, therefore not having a stacktrace.  
+            if (stackTrace == null) {  
+                stackTrace = EMPTY_STACK_TRACE;  
+            }  
+            return stackTrace;  
+        } else {  
+            // Don't need JVM help for current thread  
+            return (new Exception()).getStackTrace();  
         }  
-        // optimization so we do not call into the vm for threads that  
-        // have not yet started or have terminated  
-        if (!isAlive()) {  
-            return EMPTY_STACK_TRACE;  
-        }        StackTraceElement[][] stackTraceArray = dumpThreads(new Thread[] {this});  
-        StackTraceElement[] stackTrace = stackTraceArray[0];  
-        // a thread that was alive during the previous isAlive call may have  
-        // since terminated, therefore not having a stacktrace.  
-        if (stackTrace == null) {  
-            stackTrace = EMPTY_STACK_TRACE;  
-        }  
-        return stackTrace;  
-    } else {  
-        // Don't need JVM help for current thread  
-        return (new Exception()).getStackTrace();  
-    }  
-}
+    }
 
-private native static StackTraceElement[][] dumpThreads(Thread[] threads);
+    private native static StackTraceElement[][] dumpThreads(Thread[] threads);
 
 下载 openJdk7的源码查询 jdk 的 native 实现代码，列表如下【这里因为篇幅问题，不详细罗列涉及到的代码，有兴趣的可以根据文件名称和行号查找相关代码】：
 
-\openjdk7\jdk\src\share\native\java\lang\Thread.c
-\openjdk7\hotspot\src\share\vm\prims\jvm.h line:294:
-\openjdk7\hotspot\src\share\vm\prims\jvm.cpp line:4382-4414:
-\openjdk7\hotspot\src\share\vm\services\threadService.cpp line:235-267:
-\openjdk7\hotspot\src\share\vm\services\threadService.cpp line:566-577:
-\openjdk7\hotspot\src\share\vm\classfile\javaClasses.cpp line:1635-[1651,1654,1658]:
+    \openjdk7\jdk\src\share\native\java\lang\Thread.c
+    \openjdk7\hotspot\src\share\vm\prims\jvm.h line:294:
+    \openjdk7\hotspot\src\share\vm\prims\jvm.cpp line:4382-4414:
+    \openjdk7\hotspot\src\share\vm\services\threadService.cpp line:235-267:
+    \openjdk7\hotspot\src\share\vm\services\threadService.cpp line:566-577:
+    \openjdk7\hotspot\src\share\vm\classfile\javaClasses.cpp line:1635-[1651,1654,1658]:
 
 完成跟踪了底层的 jvm 源码后发现，是下边的三条代码引发了整个程序的变慢问题。
 
-oop classname = StringTable::intern((char*) str, CHECK_0);  
-oop methodname = StringTable::intern(method->name(), CHECK_0);  
-oop filename = StringTable::intern(source, CHECK_0);
+    oop classname = StringTable::intern((char*) str, CHECK_0);  
+    oop methodname = StringTable::intern(method->name(), CHECK_0);  
+    oop filename = StringTable::intern(source, CHECK_0);
 
 这三段代码是获取类名、方法名、和文件名。因为类名、方法名、文件名都是存储在字符串常量池中的，所以每次获取它们都是通过String#intern方法。但没有考虑到的是默认的 StringPool 的长度是1009且不可变的。因此一旦常量池中的字符串达到的一定的规模后，性能会急剧下降。
 
@@ -276,28 +276,28 @@ oop filename = StringTable::intern(source, CHECK_0);
 
 导致这个 intern 变慢的原因是因为 fastjson 对String#intern方法的使用不当造成的。跟踪 fastjson 中的实现代码发现，
 
-com.alibaba.fastjson.parser.JSONScanner#scanFieldSymbol()：
+    com.alibaba.fastjson.parser.JSONScanner#scanFieldSymbol()：
 
-if (ch == '\"') {
-    bp = index;
-    this.ch = ch = buf[bp];
-    strVal = symbolTable.addSymbol(buf, start, index - start - 1, hash);
-    break;
-}
+    if (ch == '\"') {
+        bp = index;
+        this.ch = ch = buf[bp];
+        strVal = symbolTable.addSymbol(buf, start, index - start - 1, hash);
+        break;
+    }
 
-com.alibaba.fastjson.parser.SymbolTable#addSymbol():
+    com.alibaba.fastjson.parser.SymbolTable#addSymbol():
 
-/**
- * Constructs a new entry from the specified symbol information and next entry reference.
- */
-public Entry(char[] ch, int offset, int length, int hash, Entry next){
-    characters = new char[length];
-    System.arraycopy(ch, offset, characters, 0, length);
-    symbol = new String(characters).intern();
-    this.next = next;
-    this.hashCode = hash;
-    this.bytes = null;
-}
+    /**
+     * Constructs a new entry from the specified symbol information and next entry reference.
+     */
+    public Entry(char[] ch, int offset, int length, int hash, Entry next){
+        characters = new char[length];
+        System.arraycopy(ch, offset, characters, 0, length);
+        symbol = new String(characters).intern();
+        this.next = next;
+        this.hashCode = hash;
+        this.bytes = null;
+    }
 
 fastjson 中对所有的 json 的 key 使用了 intern 方法，缓存到了字符串常量池中，这样每次读取的时候就会非常快，大大减少时间和空间。而且 json 的 key 通常都是不变的。这个地方没有考虑到大量的 json key 如果是变化的，那就会给字符串常量池带来很大的负担。
 
@@ -305,11 +305,11 @@ fastjson 中对所有的 json 的 key 使用了 intern 方法，缓存到了字�
 
 [1.1.24版本的com.alibaba.fastjson.parser.SymbolTable#addSymbol() Line:113]代码
 
-public static final int MAX_SIZE           = 1024;
- 
-if (size >= MAX_SIZE) {
-    return new String(buffer, offset, len);
-}
+    public static final int MAX_SIZE           = 1024;
+
+    if (size >= MAX_SIZE) {
+        return new String(buffer, offset, len);
+    }
 
 这个问题是70w 数据量时候的引发的，如果是几百万的数据量的话可能就不只是30ms 的问题了。因此在使用系统级提供的String#intern方式一定要慎重！
 
