@@ -130,6 +130,33 @@ wait, notify 和 notifyAll，这些在多线程中被经常用到的保留关键
             } 
         }
 
+输出
+
+    How to use wait and notify method in Java
+    Solving Producer Consumper Problem
+    Producing value : 4836115
+    Producing value : 1627035788
+    Producing value : 1213313464
+    Producing value : -668182138
+    Producing value : -2002315011
+    Producing value : -526454429
+    Producing value : 1480250536
+    Producing value : -1392433844
+    Producing value : 897798277
+    Producing value : -1035274413
+    Queue is full, Producer thread waiting for consumer to take something from queue
+    Consuming value : 4836115
+    Consuming value : 1627035788
+    Consuming value : 1213313464
+    Consuming value : -668182138
+    Consuming value : -2002315011
+    Consuming value : -526454429
+    Consuming value : 1480250536
+    Consuming value : -1392433844
+    Consuming value : 897798277
+    Consuming value : -1035274413
+    Queue is empty,Consumer thread is waiting for producer thread to put something in queue
+
 为了更好地理解这个程序，我建议你在debug模式里跑这个程序。一旦你在debug模式下启动程序，它会停止在PRODUCER或者CONSUMER线程上，取决于哪个线程占据了CPU。因为两个线程都有wait()的条件，它们一定会停止，然后你就可以跑这个程序然后看发生什么了（很有可能它就会输出我们以上展示的内容）。你也可以使用Eclipse里的Step into和Step over按钮来更好地理解多线程间发生的事情。
 
 ## 本文重点：
