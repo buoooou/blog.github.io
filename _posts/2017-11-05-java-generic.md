@@ -1,6 +1,6 @@
 ---
 layout: post
-published: false
+published: true
 title: Java Generic泛型详解
 ---
 # Java Generic泛型详解
