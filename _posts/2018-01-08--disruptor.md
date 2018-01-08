@@ -9,7 +9,7 @@ title: 高性能线程间队列 DISRUPTOR 简介
 
 Disruptor是英国外汇交易公司LMAX开发的一个高性能队列，研发的初衷是解决内存队列的延迟问题。与Kafka(Apache Kafka)、RabbitMQ(RabbitMQ)用于服务间的消息队列不同，disruptor一般用于线程间消息的传递。基于Disruptor开发的系统单线程能支撑每秒600万订单，2010年在QCon演讲后，获得了业界关注。2011年，企业应用软件专家Martin Fowler专门撰写长文介绍The LMAX Architecture。同年它还获得了Oracle官方的Duke大奖。其他关于disruptor的背景就不在此多言，可以自己google。
 
-    https://martinfowler.com/articles/lmax.html
+[https://martinfowler.com/articles/lmax.html]()
     
 ## 性能
 
@@ -24,7 +24,7 @@ disruptor是用于一个JVM中多个线程之间的消息队列，作用与Array
 
 完整的官方性能测试数据在Performance Results · LMAX-Exchange/disruptor Wiki可以看到，性能测试的代码已经包含在disruptor的代码中，你完全可以git下来在自己的主机上测试一下看看
 
-	https://github.com/LMAX-Exchange/disruptor/wiki/Performance-Results
+[https://github.com/LMAX-Exchange/disruptor/wiki/Performance-Results]()
  
 ## 如何使用
 
@@ -266,8 +266,7 @@ disruptor也提供了函数让你自定义消费者之间的关系，如
 - 元素加入数组 
 - 释放锁
 
-
-	http://niceaz.com/wait%e3%80%81notify%e4%b8%8econdition/
+[http://niceaz.com/wait%e3%80%81notify%e4%b8%8econdition/]()
 
 
       public void put(E e) throws InterruptedException {
@@ -303,7 +302,7 @@ disruptor也提供了函数让你自定义消费者之间的关系，如
 
 这篇文章中讲述了一个实验， 测试程序调用了一个函数，该函数会对一个64位的计数器循环自增5亿次，在2.4G 6核机器上得到了如下的实验数据：
 
-	http://mechanitis.blogspot.com/2011/07/dissecting-disruptor-why-its-so-fast.html
+[http://mechanitis.blogspot.com/2011/07/dissecting-disruptor-why-its-so-fast.html]()
 
 ![WX20180108-203422.png]({{site.baseurl}}/img/WX20180108-203422.png)
 
@@ -396,8 +395,7 @@ disruptor.handleWith(journal, replacate, unmarshall).then(business)
 
 LMAX为了避免business processor出现异常导致消息的丢失，在business processor处理前将消息全部持久化存储。当business processor出现异常时，重新处理持久化的数据即可。我们可以借鉴LMAX的这种方式，来避免消息的丢失。更详细关于LMAX的业务架构介绍可以参考The LMAX Architecture
 
-
-	https://martinfowler.com/articles/lmax.html
+[https://martinfowler.com/articles/lmax.html]()
 
 ### log4j 2
 
