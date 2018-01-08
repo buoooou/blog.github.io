@@ -316,103 +316,68 @@ disruptor也提供了函数让你自定义消费者之间的关系，如
 **disruptor则与之不同：**
 
 
-
 disruptor使用了CAS机制同步线程，线程同步代价小于lock
 
 disruptor遵守single writer原则，一块内存对应单个线程，不仅produce和consume不是互斥的，多线程的produce也不是互斥的
 
-
-
-伪共享
-
-
+**伪共享**
 
 伪共享一直是一个比较高级的话题，Doug lea在JDK的Concurrent使用了大量的缓存行机制避免伪共享，disruptor也是用了这样的机制。但是对于广大的码农而言，实际工作中我们可能很少会需要使用这样的机制。毕竟对于大部分人而言，与避免伪共享带来的性能提升而言，优化工程架构，算法，io等可能会给我们带来更大的性能提升。所以本文只简单提到这个话题，并不深入讲解，毕竟我也没有实际的应用经验去讲解这个话题。
 
-
-
-单生产者模式
-
-
+### 单生产者模式1.
 
 如图所示，图中数组代表ringbuffer，红色元素代表已经发布过的事件槽，绿色元素代表将要发布的事件槽，白色元素代表尚未利用的事件槽。disruptor生产时间包括三个阶段：申请事件槽，更新数据，发布事件槽。单生产者相对简单，
 
 
+- 申请事件槽：此时，ringbuffer会将cursor后的一个事件槽返回给用户，但不更新cursor，所以对于消费者而言，该事件还是不可见的。
+- 
+- 更新数据：生产者对该事件槽数据进行更新，
+- 
+- 发布事件槽：发布的过程就是移动cursor的过程，完成移动cursor后，发布完成，该事件对生产者可见。
 
-申请事件槽：此时，ringbuffer会将cursor后的一个事件槽返回给用户，但不更新cursor，所以对于消费者而言，该事件还是不可见的。
-
-更新数据：生产者对该事件槽数据进行更新，
-
-发布事件槽：发布的过程就是移动cursor的过程，完成移动cursor后，发布完成，该事件对生产者可见。
-
-
-
-download (1)
+![WX20180108-203433.png]({{site.baseurl}}/img/WX20180108-203433.png)
 
 
-
-多生产者模式
-
+### 多生产者模式
 
 
 多生产者的模式相对就比较复杂，也体现了disuptor是如何利用CAS机制进行的线程间同步，并保证多个生产者的生产不互斥。如图所示，红色的代表已经发布的事件，淡绿色代表生产者1申请的事件槽，淡黄色代表生产者2申请的事件槽。
 
 
+- 申请事件槽：多生产者生产数据的过程就是移动cursor的过程，多个线程同时使用CAS操作更新cursor的值，哪个线程成功的更新了cursor的值哪个线程就成功申请了事件槽，而其他的线程则利用CAS操作继续尝试更新cursor的值。申请成功后cursor的值已经发生了改变，那怎么保证在该事件槽发布之前对消费者不可见呢？disruptor额外利用了一个数组，如图中所示。深黄色代表相应的事件槽已经发布，白色代表相应的事件槽尚未发布。disruptor使用了UNSAFE类对该数组进行操作，从而保证数组值更新的高效性。
+- 
+- 更新数据：生产者按序将成功申请到的事件槽数据进行更新
+- 
+- 发布事件槽：生产者将对应数组的标志位更新
 
-申请事件槽：多生产者生产数据的过程就是移动cursor的过程，多个线程同时使用CAS操作更新cursor的值，哪个线程成功的更新了cursor的值哪个线程就成功申请了事件槽，而其他的线程则利用CAS操作继续尝试更新cursor的值。申请成功后cursor的值已经发生了改变，那怎么保证在该事件槽发布之前对消费者不可见呢？disruptor额外利用了一个数组，如图中所示。深黄色代表相应的事件槽已经发布，白色代表相应的事件槽尚未发布。disruptor使用了UNSAFE类对该数组进行操作，从而保证数组值更新的高效性。
-
-更新数据：生产者按序将成功申请到的事件槽数据进行更新
-
-发布事件槽：生产者将对应数组的标志位更新
-
-
-
-download (2)
-
+![WX20180108-203444.png]({{site.baseurl}}/img/WX20180108-203444.png)
 
 
 多个生产者生产数据唯一的竞争就发生在cursor值的更新，disruptor使用CAS操作更新cursor的值从而避免使用了锁。申请数据之后，多个生产者可以并发更新数据，发布事件槽，互不影响。需要说明的是，如图中所示，生产者1申请了三个事件槽，发布了一个事件槽，生产者2申请了两个事件槽，发布了一个事件槽。时间上，在生产者1发布其剩余的两个事件槽之前，生产者2发布的事件槽对于消费则也还是不可见的。所以，每个生产者一定要保证即便发生异常也要发布事件槽，避免其后的生产者发布的事件槽对消费者不可见。所以生产则更新数据和发布事件槽一般是一个try…finally结构。或者使用disruptor提供的EventTranslator机制发布事件，EventTranslator自动封装了try…finally结构
 
-
-
-tips
-
-
+**tips**
 
 消费者的机制与生产者非常类似，本文不再赘述。
 
+### 使用案例
 
-
-使用案例
-
-
-
-LMAX应用场景
-
+**LMAX应用场景**
 
 
 第一个讲LMAX的应用场景，毕竟是催生disruptor的应用场景，所以非常典型。同时，disruptor作为内存消息队列，怎么保证宕机的情况下数据不丢失这一关键问题在LMAX自身的应用中可以得到一点启示。
 
-
-
 LMAX的机构如图所示，共包括三部分，Input Disruptor，Business Processor，Output Disruptor。
 
-
-
-download (3)
-
-
+![WX20180108-203455.png]({{site.baseurl}}/img/WX20180108-203455.png)
 
 Input Disruptor从网络接收到消息，在Business Processor处理之前需要完成三种操作:
 
 
-
-Journal：将收到的信息持久化，在Business Processor线程崩溃的时候恢复数据
-
-Replicate：复制信息到其他Business Processor节点
-
-Unmarshall：重组信息数据格式，便于Business Processor处理
-
+- Journal：将收到的信息持久化，在Business Processor线程崩溃的时候恢复数据
+- 
+- Replicate：复制信息到其他Business Processor节点
+- 
+- Unmarshall：重组信息数据格式，便于Business Processor处理
 
 
 Business Processor负责业务逻辑处理，并将结果写入Output Disruptor
@@ -420,13 +385,9 @@ Business Processor负责业务逻辑处理，并将结果写入Output Disruptor
 Output Disruptor负责读取Business Processor处理结果，重组数据格式进行网络传输。
 
 
-
 重点介绍一下Input Disruptor，Input Disruptor的依赖关系如图所示：
 
-
-
-download (4)
-
+![WX20180108-203503.png]({{site.baseurl}}/img/WX20180108-203503.png)
 
 
 用disruptor的语言编写就是：
@@ -436,60 +397,41 @@ disruptor.handleWith(journal, replacate, unmarshall).then(business)
 LMAX为了避免business processor出现异常导致消息的丢失，在business processor处理前将消息全部持久化存储。当business processor出现异常时，重新处理持久化的数据即可。我们可以借鉴LMAX的这种方式，来避免消息的丢失。更详细关于LMAX的业务架构介绍可以参考The LMAX Architecture
 
 
+	https://martinfowler.com/articles/lmax.html
 
-https://martinfowler.com/articles/lmax.html
-
-
-
-log4j 2
-
+### log4j 2
 
 
 以下一段文字引用自Apache log4j 2官网，这段文字足以说明disruptor对log4j 2的性能提升的巨大贡献。
 
 
+    Log4j 2 contains next-generation Asynchronous Loggers based on the LMAX Disruptor library. In multi-threaded scenarios Asynchronous Loggers have 18 times higher throughput and orders of magnitude lower latency than Log4j 1.x and Logback.
 
-Log4j 2 contains next-generation Asynchronous Loggers based on the LMAX Disruptor library. In multi-threaded scenarios Asynchronous Loggers have 18 times higher throughput and orders of magnitude lower latency than Log4j 1.x and Logback.
+    log4j2性能的优越主要体现在异步日志记录方面，以下两个图片摘自官网分别从吞吐率和响应时间两个方面体现了log4j2异步日志性能的强悍。
 
-
-
-log4j2性能的优越主要体现在异步日志记录方面，以下两个图片摘自官网分别从吞吐率和响应时间两个方面体现了log4j2异步日志性能的强悍。
-
-
-
-download (5)download (6)
-
+![WX20180108-203518.png]({{site.baseurl}}/img/WX20180108-203518.png)
+![WX20180108-203534.png]({{site.baseurl}}/img/WX20180108-203534.png)
 
 
 log4j2异步日志的实现就是每次调用将待记录的日志写入disruptor后迅速返回，这样无需等待信息落盘从而大大提高相应时间。同时，disruptor的事件槽重用机制避免产生大量Java对象，进而避免GC对相应时间和吞吐率的影响，也就是log4j2官网提到的Garbage-free。
 
 
-
-文件hash
-
-
+### 文件hash
 
 还有一种比较常见的应用场景是文件hash。如图所示，需要对大文件进行hash以方便后续处理，由于文件太大，所以把文件分给四个线程分别处理，每个线程读取相应信息，计算hash值，写入相应文件。
 
-
-
-download (8)
-
+![WX20180108-203542.png]({{site.baseurl}}/img/WX20180108-203542.png)
 
 
 这样的方法有两个弊端：
 
-
-
-同一个线程内，读写相互依赖，互相等待
-
-不同线程可能争夺同一个输出文件，需要lock同步
-
+- 同一个线程内，读写相互依赖，互相等待
+- 
+- 不同线程可能争夺同一个输出文件，需要lock同步
 
 
 于是改为如下方法，四个线程读取数据，计算hash值，将信息写入相应disruptor。每个disruptor对应一个消费者，将disruptor中的信息落盘持久化。对于四个读取线程而言，只有读取文件操作，没有写文件操作，因此不存在读写互相依赖的问题。对于写线程而言，只存在写文件操作，没有读文件，因此也不存在读写互相依赖的问题。同时disruptor的存在又很好的解决了多个线程互相竞争同一个文件的问题，因此可以大大提高程序的吞吐率。
 
+![WX20180108-203556.png]({{site.baseurl}}/img/WX20180108-203556.png)
 
-
-download (9)   
     
