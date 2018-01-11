@@ -19,9 +19,9 @@ HashMap的当前长度。上一期曾经说过，HashMap的长度是2的幂。
 
 HashMap负载因子，默认值为0.75f。
 
-衡量HashMap是否进行Resize的条件如下：
+**衡量HashMap是否进行Resize的条件如下：**
 
-HashMap.Size   >=  Capacity * LoadFactor
+**HashMap.Size   >=  Capacity  LoadFactor**
 
 
 ## 1.扩容
