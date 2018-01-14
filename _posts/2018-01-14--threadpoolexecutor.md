@@ -12,9 +12,10 @@ title: 扩展 ThreadPoolExecutor 的一种办法
 
 全宇宙的JAVA IT人士应该都知道ThreadPoolExecutor的执行流程：
 
-core线程还能应付的,则不断的创建新的线程;
-core线程无法应付,则将任务扔到队列里面;
-队列满了(意味着插入任务失败),则开始创建MAX线程,线程数达到MAX后,队列还一直是满的,则抛出RejectedExecutionException.
+- core线程还能应付的,则不断的创建新的线程;
+- core线程无法应付,则将任务扔到队列里面;
+- 队列满了(意味着插入任务失败),则开始创建MAX线程,线程数达到MAX后,队列还一直是满的,则抛出RejectedExecutionException.
+
 
 这个执行流程有个小问题,就是当core线程无法应付请求的时候,会立刻将任务添加到队列中,如果队列非常长,而任务又非常多,那么将会有频繁的任务入队列和任务出队列的操作。
 
@@ -28,138 +29,7 @@ core线程无法应付,则将任务扔到队列里面;
 
 我们通过覆盖队列的offer方法来实现这个目标。
 
-  @Override
-public  boolean offer(Runnable o) {
-    int currentPoolThreadSize = executor.getPoolSize();
-    //如果线程池里的线程数量已经到达最大,将任务添加到队列中
-    if (currentPoolThreadSize == executor.getMaximumPoolSize()) {
-        return super.offer(o);
-    }
-    //说明有空闲的线程,这个时候无需创建core线程之外的线程,而是把任务直接丢到队列里即可
-    if (executor.getSubmittedTaskCount() < currentPoolThreadSize) {
-        return super.offer(o);
-    }
- 
-    //如果线程池里的线程数量还没有到达最大,直接创建线程,而不是把任务丢到队列里面
-    if (currentPoolThreadSize < executor.getMaximumPoolSize()) {
-        return false;
-    }
- 
-    return super.offer(o);
-}
-
-注意其中的
-
-if (executor.getSubmittedTaskCount() < currentPoolThreadSize) {
-        return super.offer(o);
-}
-
-是表示core线程仍然能处理的来,同时又有空闲线程的情况,将任务插入到队列中。 如何判断线程池中有空闲线程呢？ 可以使用一个计数器来实现,每当execute方法被执行的时候,计算器加1,当afterExecute被执行后,计数器减1.
-
-@Override
-public void execute(Runnable command) {
-    submittedTaskCount.incrementAndGet();
-    //代码未完整,待补充。。。。。
-}
-
-@Override
-   protected void afterExecute(Runnable r, Throwable t) {
-       submittedTaskCount.decrementAndGet();
-   }
-
-这样,当
-
-executor.getSubmittedTaskCount() < currentPoolThreadSize
-
-的时候,说明有空闲线程。
-
-## 完整代码
-
-EnhancedThreadPoolExecutor类
-
-package executer;
- 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
- 
-public class EnhancedThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor {
- 
-    /**
-     * 计数器,用于表示已经提交到队列里面的task的数量,这里task特指还未完成的task。
-     * 当task执行完后,submittedTaskCount会减1的。
-     */
-    private final AtomicInteger submittedTaskCount = new AtomicInteger(0);
- 
-    public EnhancedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, TaskQueue workQueue) {
-        super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, new ThreadPoolExecutor.AbortPolicy());
-        workQueue.setExecutor(this);
-    }
- 
-    /**
-     * 覆盖父类的afterExecute方法,当task执行完成后,将计数器减1
-     */
-    @Override
-    protected void afterExecute(Runnable r, Throwable t) {
-        submittedTaskCount.decrementAndGet();
-    }
- 
- 
-    public int getSubmittedTaskCount() {
-        return submittedTaskCount.get();
-    }
- 
- 
-    /**
-     * 覆盖父类的execute方法,在任务开始执行之前,计数器加1。
-     */
-    @Override
-    public void execute(Runnable command) {
-        submittedTaskCount.incrementAndGet();
-        try {
-            super.execute(command);
-        } catch (RejectedExecutionException rx) {
-            //当发生RejectedExecutionException,尝试再次将task丢到队列里面,如果还是发生RejectedExecutionException,则直接抛出异常。
-            BlockingQueue<Runnable> taskQueue = super.getQueue();
-            if (taskQueue instanceof TaskQueue) {
-                final TaskQueue queue = (TaskQueue)taskQueue;
-                if (!queue.forceTaskIntoQueue(command)) {
-                    submittedTaskCount.decrementAndGet();
-                    throw new RejectedExecutionException("队列已满");
-                }
-            } else {
-                submittedTaskCount.decrementAndGet();
-                throw rx;
-            }
-        }
-    }
-}
-
-TaskQueue
-
-package executer;
- 
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
- 
-public class TaskQueue extends LinkedBlockingQueue<Runnable> {
-    private EnhancedThreadPoolExecutor executor;
- 
-    public TaskQueue(int capacity) {
-        super(capacity);
-    }
- 
-    public void setExecutor(EnhancedThreadPoolExecutor exec) {
-        executor = exec;
-    }
- 
-    public boolean forceTaskIntoQueue(Runnable o) {
-        if (executor.isShutdown()) {
-            throw new RejectedExecutionException("Executor已经关闭了,不能将task添加到队列里面");
-        }
-        return super.offer(o);
-    }
- 
-    @Override
+      @Override
     public  boolean offer(Runnable o) {
         int currentPoolThreadSize = executor.getPoolSize();
         //如果线程池里的线程数量已经到达最大,将任务添加到队列中
@@ -170,50 +40,181 @@ public class TaskQueue extends LinkedBlockingQueue<Runnable> {
         if (executor.getSubmittedTaskCount() < currentPoolThreadSize) {
             return super.offer(o);
         }
- 
+
         //如果线程池里的线程数量还没有到达最大,直接创建线程,而不是把任务丢到队列里面
         if (currentPoolThreadSize < executor.getMaximumPoolSize()) {
             return false;
         }
- 
+
         return super.offer(o);
     }
-}
+
+注意其中的
+
+    if (executor.getSubmittedTaskCount() < currentPoolThreadSize) {
+            return super.offer(o);
+    }
+
+是表示core线程仍然能处理的来,同时又有空闲线程的情况,将任务插入到队列中。 如何判断线程池中有空闲线程呢？ 可以使用一个计数器来实现,每当execute方法被执行的时候,计算器加1,当afterExecute被执行后,计数器减1.
+
+    @Override
+    public void execute(Runnable command) {
+        submittedTaskCount.incrementAndGet();
+        //代码未完整,待补充。。。。。
+    }
+
+    @Override
+       protected void afterExecute(Runnable r, Throwable t) {
+           submittedTaskCount.decrementAndGet();
+       }
+
+这样,当
+
+	executor.getSubmittedTaskCount() < currentPoolThreadSize
+
+的时候,说明有空闲线程。
+
+## 完整代码
+
+EnhancedThreadPoolExecutor类
+
+    package executer;
+
+    import java.util.concurrent.*;
+    import java.util.concurrent.atomic.AtomicInteger;
+
+    public class EnhancedThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor {
+
+        /**
+         * 计数器,用于表示已经提交到队列里面的task的数量,这里task特指还未完成的task。
+         * 当task执行完后,submittedTaskCount会减1的。
+         */
+        private final AtomicInteger submittedTaskCount = new AtomicInteger(0);
+
+        public EnhancedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, TaskQueue workQueue) {
+            super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, new ThreadPoolExecutor.AbortPolicy());
+            workQueue.setExecutor(this);
+        }
+
+        /**
+         * 覆盖父类的afterExecute方法,当task执行完成后,将计数器减1
+         */
+        @Override
+        protected void afterExecute(Runnable r, Throwable t) {
+            submittedTaskCount.decrementAndGet();
+        }
+
+
+        public int getSubmittedTaskCount() {
+            return submittedTaskCount.get();
+        }
+
+
+        /**
+         * 覆盖父类的execute方法,在任务开始执行之前,计数器加1。
+         */
+        @Override
+        public void execute(Runnable command) {
+            submittedTaskCount.incrementAndGet();
+            try {
+                super.execute(command);
+            } catch (RejectedExecutionException rx) {
+                //当发生RejectedExecutionException,尝试再次将task丢到队列里面,如果还是发生RejectedExecutionException,则直接抛出异常。
+                BlockingQueue<Runnable> taskQueue = super.getQueue();
+                if (taskQueue instanceof TaskQueue) {
+                    final TaskQueue queue = (TaskQueue)taskQueue;
+                    if (!queue.forceTaskIntoQueue(command)) {
+                        submittedTaskCount.decrementAndGet();
+                        throw new RejectedExecutionException("队列已满");
+                    }
+                } else {
+                    submittedTaskCount.decrementAndGet();
+                    throw rx;
+                }
+            }
+        }
+    }
+
+TaskQueue
+
+    package executer;
+
+    import java.util.concurrent.LinkedBlockingQueue;
+    import java.util.concurrent.RejectedExecutionException;
+
+    public class TaskQueue extends LinkedBlockingQueue<Runnable> {
+        private EnhancedThreadPoolExecutor executor;
+
+        public TaskQueue(int capacity) {
+            super(capacity);
+        }
+
+        public void setExecutor(EnhancedThreadPoolExecutor exec) {
+            executor = exec;
+        }
+
+        public boolean forceTaskIntoQueue(Runnable o) {
+            if (executor.isShutdown()) {
+                throw new RejectedExecutionException("Executor已经关闭了,不能将task添加到队列里面");
+            }
+            return super.offer(o);
+        }
+
+        @Override
+        public  boolean offer(Runnable o) {
+            int currentPoolThreadSize = executor.getPoolSize();
+            //如果线程池里的线程数量已经到达最大,将任务添加到队列中
+            if (currentPoolThreadSize == executor.getMaximumPoolSize()) {
+                return super.offer(o);
+            }
+            //说明有空闲的线程,这个时候无需创建core线程之外的线程,而是把任务直接丢到队列里即可
+            if (executor.getSubmittedTaskCount() < currentPoolThreadSize) {
+                return super.offer(o);
+            }
+
+            //如果线程池里的线程数量还没有到达最大,直接创建线程,而不是把任务丢到队列里面
+            if (currentPoolThreadSize < executor.getMaximumPoolSize()) {
+                return false;
+            }
+
+            return super.offer(o);
+        }
+    }
 
 TestExecuter
 
-package executer;
- 
-import java.util.concurrent.TimeUnit;
- 
-public class TestExecuter {
-    private static final int CORE_SIZE = 5;
- 
-    private static final int MAX_SIZE = 10;
- 
-    private static final long KEEP_ALIVE_TIME = 30;
- 
-    private static final int QUEUE_SIZE = 5;
- 
-    static EnhancedThreadPoolExecutor executor = new EnhancedThreadPoolExecutor(CORE_SIZE,MAX_SIZE,KEEP_ALIVE_TIME, TimeUnit.SECONDS , new TaskQueue(QUEUE_SIZE));
- 
-    public static void main(String[] args){
-        for (int i = 0; i < 15; i++) {
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.currentThread().sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+    package executer;
+
+    import java.util.concurrent.TimeUnit;
+
+    public class TestExecuter {
+        private static final int CORE_SIZE = 5;
+
+        private static final int MAX_SIZE = 10;
+
+        private static final long KEEP_ALIVE_TIME = 30;
+
+        private static final int QUEUE_SIZE = 5;
+
+        static EnhancedThreadPoolExecutor executor = new EnhancedThreadPoolExecutor(CORE_SIZE,MAX_SIZE,KEEP_ALIVE_TIME, TimeUnit.SECONDS , new TaskQueue(QUEUE_SIZE));
+
+        public static void main(String[] args){
+            for (int i = 0; i < 15; i++) {
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.currentThread().sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
-            });
- 
-            System.out.println("线程池中现在的线程数目是："+executor.getPoolSize()+",  队列中正在等待执行的任务数量为："+ executor.getQueue().size());
+                });
+
+                System.out.println("线程池中现在的线程数目是："+executor.getPoolSize()+",  队列中正在等待执行的任务数量为："+ executor.getQueue().size());
+            }
         }
     }
-}
 
 先运行一下代码,看看是否如何预期。直接执行TestExecuter类中的main方法,运行结果如下:
 
