@@ -260,26 +260,26 @@ TestExecuter
 
 在使用ThreadPoolExecutor的时候,如果发生了RejectedExecutionException,该如何处理？本文中的代码是采用了重新将任务尝试插入到队列中,如果还是失败则直接将reject异常抛出去。
 
-@Override
-    public void execute(Runnable command) {
-        submittedTaskCount.incrementAndGet();
-        try {
-            super.execute(command);
-        } catch (RejectedExecutionException rx) {
-            //当发生RejectedExecutionException,尝试再次将task丢到队列里面,如果还是发生RejectedExecutionException,则直接抛出异常。
-            BlockingQueue<Runnable> taskQueue = super.getQueue();
-            if (taskQueue instanceof TaskQueue) {
-                final TaskQueue queue = (TaskQueue)taskQueue;
-                if (!queue.forceTaskIntoQueue(command)) {
+    @Override
+        public void execute(Runnable command) {
+            submittedTaskCount.incrementAndGet();
+            try {
+                super.execute(command);
+            } catch (RejectedExecutionException rx) {
+                //当发生RejectedExecutionException,尝试再次将task丢到队列里面,如果还是发生RejectedExecutionException,则直接抛出异常。
+                BlockingQueue<Runnable> taskQueue = super.getQueue();
+                if (taskQueue instanceof TaskQueue) {
+                    final TaskQueue queue = (TaskQueue)taskQueue;
+                    if (!queue.forceTaskIntoQueue(command)) {
+                        submittedTaskCount.decrementAndGet();
+                        throw new RejectedExecutionException("队列已满");
+                    }
+                } else {
                     submittedTaskCount.decrementAndGet();
-                    throw new RejectedExecutionException("队列已满");
+                    throw rx;
                 }
-            } else {
-                submittedTaskCount.decrementAndGet();
-                throw rx;
             }
         }
-    }
 
 TaskQueue类提供了forceTaskIntoQueue方法,将任务插入到队列中。
 
