@@ -5,27 +5,12 @@ title: 对 volatile、compareAndSet、weakCompareAndSet 的一些思考
 ---
 # 对 volatile、compareAndSet、weakCompareAndSet 的一些思考
 
-基于 JDK 8
+## 基于 JDK 8
 
 首先，我们知道AtomicIntegerFieldUpdater是一个基于反射的功能包，它可以实现针对于指定类中volatile int 字段的原子更新。
 
 『 compareAndSet 』：
 
-/**
- * Atomically sets the field of the given object managed by this updater
- * to the given updated value if the current value {@code ==} the
- * expected value. This method is guaranteed to be atomic with respect to
- * other calls to {@code compareAndSet} and {@code set}, but not
- * necessarily with respect to other changes in the field.
- *
- * @param obj An object whose field to conditionally set
- * @param expect the expected value
- * @param update the new value
- * @return {@code true} if successful
- * @throws ClassCastException if {@code obj} is not an instance
- * of the class possessing the field established in the constructor
- */
-public abstract boolean compareAndSet(T obj, int expect, int update);
 
 以原子的方式更新这个更新器所管理的对象(obj)的成员变量，并且将这个成员变量更新为给定的更新后的值(update)如果当前值等于期望值(expect)时。
 
@@ -35,25 +20,6 @@ public abstract boolean compareAndSet(T obj, int expect, int update);
 
 然后，我们来看下另一个方法『weakCompareAndSet』：
 
-/**
- * Atomically sets the field of the given object managed by this updater
- * to the given updated value if the current value {@code ==} the
- * expected value. This method is guaranteed to be atomic with respect to
- * other calls to {@code compareAndSet} and {@code set}, but not
- * necessarily with respect to other changes in the field.
- *
- * <p><a href="package-summary.html#weakCompareAndSet">May fail
- * spuriously and does not provide ordering guarantees</a>, so is
- * only rarely an appropriate alternative to {@code compareAndSet}.
- *
- * @param obj An object whose field to conditionally set
- * @param expect the expected value
- * @param update the new value
- * @return {@code true} if successful
- * @throws ClassCastException if {@code obj} is not an instance
- * of the class possessing the field established in the constructor
- */
-public abstract boolean weakCompareAndSet(T obj, int expect, int update);
 
 以原子的方式更新这个更新器所管理的对象(obj)的成员变量，并且将这个成员变量更新为给定的更新后的值(update)如果当前值等于期望值(expect)时。
 
@@ -65,11 +31,11 @@ public abstract boolean weakCompareAndSet(T obj, int expect, int update);
 
 首先，我从jdk 8 的官方文档的java.util.concurrent.atomic上找到这么二段话：
 
-The atomic classes also support method weakCompareAndSet, which has limited applicability. On some platforms, the weak version may be more efficient than compareAndSet in the normal case, but differs in that any given invocation of the weakCompareAndSet method may return false spuriously (that is, for no apparent reason). A false return means only that the operation may be retried if desired, relying on the guarantee that repeated invocation when the variable holds expectedValue and no other thread is also attempting to set the variable will eventually succeed. (Such spurious failures may for example be due to memory contention effects that are unrelated to whether the expected and current values are equal.) Additionally weakCompareAndSet does not provide ordering guarantees that are usually needed for synchronization control. However, the method may be useful for updating counters and statistics when such updates are unrelated to the other happens-before orderings of a program. When a thread sees an update to an atomic variable caused by a weakCompareAndSet, it does not necessarily see updates to any other variables that occurred before the weakCompareAndSet. This may be acceptable when, for example, updating performance statistics, but rarely otherwise.
+    The atomic classes also support method weakCompareAndSet, which has limited applicability. On some platforms, the weak version may be more efficient than compareAndSet in the normal case, but differs in that any given invocation of the weakCompareAndSet method may return false spuriously (that is, for no apparent reason). A false return means only that the operation may be retried if desired, relying on the guarantee that repeated invocation when the variable holds expectedValue and no other thread is also attempting to set the variable will eventually succeed. (Such spurious failures may for example be due to memory contention effects that are unrelated to whether the expected and current values are equal.) Additionally weakCompareAndSet does not provide ordering guarantees that are usually needed for synchronization control. However, the method may be useful for updating counters and statistics when such updates are unrelated to the other happens-before orderings of a program. When a thread sees an update to an atomic variable caused by a weakCompareAndSet, it does not necessarily see updates to any other variables that occurred before the weakCompareAndSet. This may be acceptable when, for example, updating performance statistics, but rarely otherwise.
 
 一个原子类也支持weakCompareAndSet方法，该方法有适用性的限制。在一些平台上，在正常情况下weak版本比compareAndSet更高效，但是不同的是任何给定的weakCompareAndSet方法的调用都可能会返回一个虚假的失败( 无任何明显的原因 )。一个失败的返回意味着，操作将会重新执行如果需要的话，重复操作依赖的保证是当变量持有expectedValue的值并且没有其他的线程也尝试设置这个值将最终操作成功。( 一个虚假的失败可能是由于内存冲突的影响，而和预期值(expectedValue)和当前的值是否相等无关 )。此外weakCompareAndSet并不会提供排序的保证，即通常需要用于同步控制的排序保证。然而，这个方法可能在修改计数器或者统计，这种修改无关于其他happens-before的程序中非常有用。当一个线程看到一个通过weakCompareAndSet修改的原子变量时，它不被要求看到其他变量的修改，即便该变量的修改在weakCompareAndSet操作之前。
 
-weakCompareAndSet atomically reads and conditionally writes a variable but does not create any happens-before orderings, so provides no guarantees with respect to previous or subsequent reads and writes of any variables other than the target of the weakCompareAndSet.
+	weakCompareAndSet atomically reads and conditionally writes a variable but does not create any happens-before orderings, so provides no guarantees with respect to previous or subsequent reads and writes of any variables other than the target of the weakCompareAndSet.
 
 weakCompareAndSet实现了一个变量原子的读操作和有条件的原子写操作，但是它不会创建任何happen-before排序，所以该方法不提供对weakCompareAndSet操作的目标变量以外的变量的在之前或在之后的读或写操作的保证。
 
@@ -77,27 +43,29 @@ weakCompareAndSet实现了一个变量原子的读操作和有条件的原子写
 
 这里，需要对volatile进行一个较为详细的说明。这样大家就能更深刻的明白上面这段话的语义了。
 
-volatile
+## volatile
 
-volatile 的特性
+### volatile 的特性
 
 volatile变量自身具有下列特性：
 
-① 可见性/一致性：对一个 volatile 变量的读，总是能看到(任意线程)对这个 volatile 变量最后的写入。
-② 原子性：对任意单个 volatile 变量的读/写具有原子性，但类似于 volatile++这种复合操作不具有原子性。
+- ① 可见性/一致性：对一个 volatile 变量的读，总是能看到(任意线程)对这个 volatile 变量最后的写入。
+- ② 原子性：对任意单个 volatile 变量的读/写具有原子性，但类似于 volatile++这种复合操作不具有原子性。
+
 
 Q：volatile是如何保证可见性的了？
 
 A：在多核处理器中，当进行一个volatile变量的写操作时，JIT编译器生成的汇编指令会在写操作的指令前在上一个“lock”前缀。“lock”前缀的指令在多核处理器下会引发了两件事情：
 
-① 将当前处理器缓存行的数据会写回到系统内存。
-② 这个写回内存的操作会引起在其他CPU里缓存了该内存地址的数据无效。
+- ① 将当前处理器缓存行的数据会写回到系统内存。
+- ② 这个写回内存的操作会引起在其他CPU里缓存了该内存地址的数据无效。
+
 
 因此更确切的来说，因为操作缓存的最小单位为一个缓存行，所以每次对volatile变量自身的操作，都会使其所在缓存行的数据会写回到主存中，这就使得其他任意线程对该缓存行中变量的读操作总是能看到最新写入的值( 会从主存中重新载入该缓存行到线程的本地缓存中 )。当然，也正是因为缓存每次更新的最小单位为一个缓存行，这导致在某些情况下程序可能出现“伪共享”的问题。嗯，好像有些个跑题，“伪共享”并不属于本文范畴，这里就不进行展开讨论。
 
 好了，目前为止我们已经了解volatile变量自身所具有的特性了。注意，这里只是volatile自身所具有的特性，而volatile对线程的内存可见性的影响比volatile自身的特性更为重要。
 
-volatile 写-读建立的 happens before 关系
+### volatile 写-读建立的 happens before 关系
 
 happens-before 规则中有这么一条：
 volatile变量规则：对一个volatile域的写，happens-before于任意后续对这个volatile域的读。
@@ -124,50 +92,50 @@ StoreLoad屏障
 
 好了，讨论到这里，我们重新来理解下weakCompareAndSet的实现语义。也就是说，weakCompareAndSet操作仅保留了volatile自身变量的特性，而出去了happens-before规则带来的内存语义。也就是说，weakCompareAndSet无法保证处理操作目标的volatile变量外的其他变量的执行顺序( 编译器和处理器为了优化程序性能而对指令序列进行重新排序 )，同时也无法保证这些变量的可见性。
 
-源码实现
+## 源码实现
 
 目前为止，我们已经能够明白compareAndSet方法和weakCompareAndSet方法的不同之处了。那么，接下来我们来看看这两个方法的具体实现：
 
-public boolean compareAndSet(T obj, int expect, int update) {
-    if (obj == null || obj.getClass() != tclass || cclass != null) fullCheck(obj);
-    return unsafe.compareAndSwapInt(obj, offset, expect, update);
-}
- 
-public boolean weakCompareAndSet(T obj, int expect, int update) {
-    if (obj == null || obj.getClass() != tclass || cclass != null) fullCheck(obj);
-    return unsafe.compareAndSwapInt(obj, offset, expect, update);
-}
+    public boolean compareAndSet(T obj, int expect, int update) {
+        if (obj == null || obj.getClass() != tclass || cclass != null) fullCheck(obj);
+        return unsafe.compareAndSwapInt(obj, offset, expect, update);
+    }
+
+    public boolean weakCompareAndSet(T obj, int expect, int update) {
+        if (obj == null || obj.getClass() != tclass || cclass != null) fullCheck(obj);
+        return unsafe.compareAndSwapInt(obj, offset, expect, update);
+    }
 
 是的，你没有看错。这两个方法的实现完全一样。『unsafe.compareAndSwapInt(obj, offset, expect, update);』中就是调用native方法了：
 
-inline jint Atomic::cmpxchg (jint exchange_value, volatile jint* dest, jint compare_value) {
-     int mp = os::is_MP();
-     __asm__ volatile (LOCK_IF_MP(%4) "cmpxchgl %1,(%3)"
-                     : "=a" (exchange_value)
-                     : "r" (exchange_value), "a" (compare_value), "r" (dest), "r" (mp)
-                      : "cc", "memory");
-     return exchange_value;
-}
+    inline jint Atomic::cmpxchg (jint exchange_value, volatile jint* dest, jint compare_value) {
+         int mp = os::is_MP();
+         __asm__ volatile (LOCK_IF_MP(%4) "cmpxchgl %1,(%3)"
+                         : "=a" (exchange_value)
+                         : "r" (exchange_value), "a" (compare_value), "r" (dest), "r" (mp)
+                          : "cc", "memory");
+         return exchange_value;
+    }
 
 由此可见，在JDK8乃至之前的版本，weakCompareAndSet方法并没有被真是意义上的实现，目前该方法所呈现出来的效果与compareAndSet方法是一样的。
 
-基于JDK 9
+## 基于JDK 9
 
 在JDK 9中 compareAndSet 和 weakCompareAndSet方法的实现有些许的不同
 
-/**
- * Atomically updates Java variable to {@code x} if it is currently
- * holding {@code expected}.
- *
- * <p>This operation has memory semantics of a {@code volatile} read
- * and write.  Corresponds to C11 atomic_compare_exchange_strong.
- *
- * @return {@code true} if successful
- */
-@HotSpotIntrinsicCandidate
-public final native boolean compareAndSetInt(Object o, long offset,
-                                             int expected,
-                                             int x);
+    /**
+     * Atomically updates Java variable to {@code x} if it is currently
+     * holding {@code expected}.
+     *
+     * <p>This operation has memory semantics of a {@code volatile} read
+     * and write.  Corresponds to C11 atomic_compare_exchange_strong.
+     *
+     * @return {@code true} if successful
+     */
+    @HotSpotIntrinsicCandidate
+    public final native boolean compareAndSetInt(Object o, long offset,
+                                                 int expected,
+                                                 int x);
 
 ① 底层调用的native方法的实现中，cmpxchgb指令前都会有“lock”前缀了(在JDK 8中，程序会根据当前处理器的类型来决定是否为cmpxchg指令添加lock前缀。只有在CPU是多处理器(multi processors)的时候，会添加一个lock前缀)。
 
@@ -176,6 +144,4 @@ public final native boolean compareAndSetInt(Object o, long offset,
 
 也就是说虽然外面看到的在JDK9中weakCompareAndSet和compareAndSet底层依旧是调用了一样的代码，但是不排除HotSpot VM会手动来实现weakCompareAndSet真正含义的功能的可能性。
 
-后记
 
-嗯，关于compareAndSet与weakCompareAndSet两个方法的不同，看似可能是个“简单”的问题，但当我真的去探究它们的不同时，还是话费了我不少的时间，同时也让我对volatile有了更加深入的理解。这里关于CAS还有不少值得深入探讨的地方，值得再用一篇文章好好的进行叙说。关于JDK9的改变也是值得以后慢慢去探索的。
