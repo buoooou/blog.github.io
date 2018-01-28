@@ -9,7 +9,7 @@ title: 对 volatile、compareAndSet、weakCompareAndSet 的一些思考
 
 首先，我们知道AtomicIntegerFieldUpdater是一个基于反射的功能包，它可以实现针对于指定类中volatile int 字段的原子更新。
 
-『 compareAndSet 』：
+**『 compareAndSet 』：**
 
 
 以原子的方式更新这个更新器所管理的对象(obj)的成员变量，并且将这个成员变量更新为给定的更新后的值(update)如果当前值等于期望值(expect)时。
@@ -18,7 +18,7 @@ title: 对 volatile、compareAndSet、weakCompareAndSet 的一些思考
 
 嗯，这个方法好理解，compareAndSet保证了：a) 只有field的值为expect时；b) 将field的值修改为update的值；这两步是原子完成的。同时field一定为一个volatile属性，而volatile保证了属性在线程间的可见性，以及防止了指令的重排序。(关于volatile下面还会进一步展开)。嗯，一切看起来都挺美好的。
 
-然后，我们来看下另一个方法『weakCompareAndSet』：
+**『weakCompareAndSet』：**
 
 
 以原子的方式更新这个更新器所管理的对象(obj)的成员变量，并且将这个成员变量更新为给定的更新后的值(update)如果当前值等于期望值(expect)时。
@@ -143,5 +143,3 @@ StoreLoad屏障
 它表示注释的方法可能（但不能保证）由HotSpot虚拟机内在化。如果HotSpot VM用手写汇编和/或手写编译器IR（编译器本身）替换注释的方法以提高性能，则方法是内在的。
 
 也就是说虽然外面看到的在JDK9中weakCompareAndSet和compareAndSet底层依旧是调用了一样的代码，但是不排除HotSpot VM会手动来实现weakCompareAndSet真正含义的功能的可能性。
-
-
