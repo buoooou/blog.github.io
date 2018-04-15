@@ -48,7 +48,7 @@ title: ''
 
 一些源代码参考：
 
-/** Main lock guarding all access */
+	/** Main lock guarding all access */
     final ReentrantLock lock;
  
     public void put(E e) throws InterruptedException {
@@ -108,7 +108,7 @@ title: ''
 
 ArrayBlockingQueue只使用了一个lock来控制互斥访问，所有的互斥访问都在这个lock的try finally中实现。
 
-LinkedBlockingQueue
+## LinkedBlockingQueue
 
 一个基于已链接节点的、范围任意的blocking queue。此队列按 FIFO（先进先出）排序元素。队列的头部是在队列中时间最长的元素。队列的尾部是在队列中时间最短的元素。新元素插入到队列的尾部，并且队列获取操作会获得位于队列头部的元素。链接队列的吞吐量通常要高于基于数组的队列，但是在大多数并发应用程序中，其可预知的性能要低。
 
@@ -118,7 +118,7 @@ LinkedBlockingQueue
 
 一些实现代码：
 
-/** The capacity bound, or Integer.MAX_VALUE if none */
+	/** The capacity bound, or Integer.MAX_VALUE if none */
     private final int capacity;
  
     /** Current number of elements */
@@ -192,15 +192,15 @@ LinkedBlockingQueue
 
 从源代码实现来看，LinkedBlockingQueue使用了2个lock，一个takelock和一个putlock，读和写用不同的lock来控制，这样并发效率更高。
 
-ConcurrentLinkedQueue
+## ConcurrentLinkedQueue
 
 ArrayBlockingQueue和LinkedBlockingQueue都是使用lock来实现的，也就是阻塞式的队列，而ConcurrentLinkedQueue使用CAS来实现，是非阻塞式的“lock-free”实现。
 
 ConcurrentLinkedQueue源代码的实现有点复杂，具体的可看这篇文章的分析：
 
-http://www.infoq.com/cn/articles/ConcurrentLinkedQueue
+[http://www.infoq.com/cn/articles/ConcurrentLinkedQueue](原理)
 
-ConcurrentHashMap
+## ConcurrentHashMap
 
 HashMap不是线程安全的。
 
@@ -208,47 +208,44 @@ HashTable容器使用synchronized来保证线程安全，在线程竞争激烈�
 
 ConcurrentHashMap采用了Segment分段技术，容器里有多把锁，每把锁用于锁容器其中一部分数据，那么当多线程访问容器里不同数据段的数据时，线程间就不会存在锁竞争，从而可以有效的提高并发访问效率。
 
-ConcurrentHashMap结构：
-
-
 
 ConcurrentHashMap的实现原理分析：
 
-http://www.infoq.com/cn/articles/ConcurrentHashMap
+[http://www.infoq.com/cn/articles/ConcurrentHashMap](原理)
 
-CopyOnWriteArrayList
+## CopyOnWriteArrayList
 
 CopyOnWrite容器即写时复制的容器。往一个容器添加元素的时候，不直接往当前容器添加，而是先将当前容器进行Copy，复制出一个新的容器，然后新的容器里添加元素，添加完元素之后，再将原容器的引用指向新的容器。这样做的好处是可以对CopyOnWrite容器进行并发的读，而不需要加锁，因为当前容器不会添加任何元素。所以CopyOnWrite容器也是一种读写分离的思想，读和写不同的容器。类似的有CopyOnWriteArraySet。
 
-public boolean add(T e) {
-    final ReentrantLock lock = this.lock;
-    lock.lock();
-    try {
-        Object[] elements = getArray();
-        int len = elements.length;
-        // 复制出新数组
-        Object[] newElements = Arrays.copyOf(elements, len + 1);
-        // 把新元素添加到新数组里
-        newElements[len] = e;
-        // 把原数组引用指向新数组
-        setArray(newElements);
-        return true;
-    } finally {
-        lock.unlock();
+    public boolean add(T e) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            Object[] elements = getArray();
+            int len = elements.length;
+            // 复制出新数组
+            Object[] newElements = Arrays.copyOf(elements, len + 1);
+            // 把新元素添加到新数组里
+            newElements[len] = e;
+            // 把原数组引用指向新数组
+            setArray(newElements);
+            return true;
+        } finally {
+            lock.unlock();
+        }
     }
-}
-  
-final void setArray(Object[] a) {
-    array = a;
-}
+
+    final void setArray(Object[] a) {
+        array = a;
+    }
 
 读的时候不需要加锁，如果读的时候有多个线程正在向ArrayList添加数据，读还是会读到旧的数据，因为写的时候不会锁住旧的ArrayList。
 
-public E get(int index) {
-    return get(getArray(), index);
-}
+    public E get(int index) {
+        return get(getArray(), index);
+    }
 
-AbstractQueuedSynchronizer
+## AbstractQueuedSynchronizer
 
 为实现依赖于先进先出 (FIFO) 等待队列的阻塞锁和相关同步器（信号量、事件，等等）提供一个框架。此类的设计目标是成为依靠单个原子 int 值来表示状态的大多数同步器的一个有用基础。子类必须定义更改此状态的受保护方法，并定义哪种状态对于此对象意味着被获取或被释放。假定这些条件之后，此类中的其他方法就可以实现所有排队和阻塞机制。子类可以维护其他状态字段，但只是为了获得同步而只追踪使用 getState()、setState(int) 和 compareAndSetState(int, int) 方法来操作以原子方式更新的 int 值。
 
