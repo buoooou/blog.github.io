@@ -252,7 +252,7 @@ CopyOnWrite容器即写时复制的容器。往一个容器添加元素的时候
 使用示例
 以下是一个非再进入的互斥锁类，它使用值 0 表示未锁定状态，使用 1 表示锁定状态。当非重入锁定不严格地需要当前拥有者线程的记录时，此类使得使用监视器更加方便。它还支持一些条件并公开了一个检测方法：
 
-class Mutex implements Lock, java.io.Serializable {
+	class Mutex implements Lock, java.io.Serializable {
  
     // Our internal helper class
     private static class Sync extends AbstractQueuedSynchronizer {
@@ -309,7 +309,7 @@ class Mutex implements Lock, java.io.Serializable {
     }
  }
 
-ThreadPoolExecutor
+## ThreadPoolExecutor
 
 ThreadPoolExecutor 的内部工作原理，整个思路总结起来就是 5 句话：
 
@@ -323,7 +323,7 @@ ThreadPoolExecutor 的内部工作原理，整个思路总结起来就是 5 句�
 
 5. 线程池里的每个线程执行完任务后不会立刻退出，而是会去检查下等待队列里是否还有线程任务需要执行，如果在 keepAliveTime 里等不到新的任务了，那么线程就会退出。
 
-排队有三种通用策略：
+### 排队有三种通用策略：
 
 直接提交。工作队列的默认选项是SynchronousQueue，它将任务直接提交给线程而不保持它们。在此，如果不存在可用于立即运行任务的线程，则试图把任务加入队列将失败，因此会构造一个新的线程。此策略可以避免在处理可能具有内部依赖性的请求集时出现锁。直接提交通常要求无界 maximumPoolSizes 以避免拒绝新提交的任务。当命令以超过队列所能处理的平均数连续到达时，此策略允许无界线程具有增长的可能性。
 
@@ -335,57 +335,58 @@ ThreadFactory 和 RejectedExecutionHandler是ThreadPoolExecutor的两个属性�
 
 RejectedExecutionHandler 是拒绝的策略。常见有以下几种：
 
-AbortPolicy ：不执行，会抛出 RejectedExecutionException 异常。
-CallerRunsPolicy ：由调用者（调用线程池的主线程）执行。
-DiscardOldestPolicy ：抛弃等待队列中最老的。
-DiscardPolicy: 不做任何处理，即抛弃当前任务。
+- AbortPolicy ：不执行，会抛出 RejectedExecutionException 异常。
+- CallerRunsPolicy ：由调用者（调用线程池的主线程）执行。
+- DiscardOldestPolicy ：抛弃等待队列中最老的。
+- DiscardPolicy: 不做任何处理，即抛弃当前任务。
+
 
 ScheduleThreadPoolExecutor 是对ThreadPoolExecutor的集成。增加了定时触发线程任务的功能。需要注意从内部实现看，ScheduleThreadPoolExecutor 使用的是 corePoolSize 线程和一个无界队列的固定大小的池，所以调整 maximumPoolSize 没有效果。无界队列是一个内部自定义的 DelayedWorkQueue 。
 
-FixedThreadPool
+### FixedThreadPool
 
-public static ExecutorService newFixedThreadPool(int nThreads) {  
-    return new ThreadPoolExecutor(nThreads, nThreads,  
-                                  0L, TimeUnit.MILLISECONDS,  
-                                  new LinkedBlockingQueue<Runnable>());  
-}
+    public static ExecutorService newFixedThreadPool(int nThreads) {  
+        return new ThreadPoolExecutor(nThreads, nThreads,  
+                                      0L, TimeUnit.MILLISECONDS,  
+                                      new LinkedBlockingQueue<Runnable>());  
+    }
 
 实际上就是个不支持keepalivetime，且corePoolSize和maximumPoolSize相等的线程池。
 
-SingleThreadExecutor
+### SingleThreadExecutor
 
-public static ExecutorService newSingleThreadExecutor() {  
-    return new FinalizableDelegatedExecutorService  
-        (new ThreadPoolExecutor(1, 1,  
-                                0L, TimeUnit.MILLISECONDS,  
-                                new LinkedBlockingQueue<Runnable>()));  
-}
+    public static ExecutorService newSingleThreadExecutor() {  
+        return new FinalizableDelegatedExecutorService  
+            (new ThreadPoolExecutor(1, 1,  
+                                    0L, TimeUnit.MILLISECONDS,  
+                                    new LinkedBlockingQueue<Runnable>()));  
+    }
 
 实际上就是个不支持keepalivetime，且corePoolSize和maximumPoolSize都等1的线程池。
 
-CachedThreadPool
+### CachedThreadPool
 
-public static ExecutorService newCachedThreadPool() {  
-      return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 
-                                  60L, TimeUnit.SECONDS,  
-                                  new SynchronousQueue<Runnable>());  
-}
+    public static ExecutorService newCachedThreadPool() {  
+          return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 
+                                      60L, TimeUnit.SECONDS,  
+                                      new SynchronousQueue<Runnable>());  
+    }
 
 实际上就是个支持keepalivetime时间是60秒（线程空闲存活时间），且corePoolSize为0，maximumPoolSize无穷大的线程池。
 
-SingleThreadScheduledExecutor
+### SingleThreadScheduledExecutor
 
-public static ScheduledExecutorService newSingleThreadScheduledExecutor(ThreadFactory threadFactory) {  
-    return new DelegatedScheduledExecutorService  
-        (new ScheduledThreadPoolExecutor(1, threadFactory));  
-}
+    public static ScheduledExecutorService newSingleThreadScheduledExecutor(ThreadFactory threadFactory) {  
+        return new DelegatedScheduledExecutorService  
+            (new ScheduledThreadPoolExecutor(1, threadFactory));  
+    }
 
 实际上是个corePoolSize为1的ScheduledExecutor。上文说过ScheduledExecutor采用无界等待队列，所以maximumPoolSize没有作用。
 
-ScheduledThreadPool
+### ScheduledThreadPool
 
-public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) {  
-    return new ScheduledThreadPoolExecutor(corePoolSize);  
-}
+    public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) {  
+        return new ScheduledThreadPoolExecutor(corePoolSize);  
+    }
 
 实际上是corePoolSize课设定的ScheduledExecutor。上文说过ScheduledExecutor采用无界等待队列，所以maximumPoolSize没有作用。
