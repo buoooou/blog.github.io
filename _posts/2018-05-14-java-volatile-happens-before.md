@@ -182,9 +182,7 @@ JVM 永远不会转换为如下的顺序：
 
 但是，JVM 也有可能会对最后的三个读操作重排序，只要它们在 volatile 变量读之后即可。
 
-我感觉 Volatile 变量会对性能有一定的影响。
-
-你的感觉是对的，因为 volatile 变量强制访问主存，而访问主存肯定被访问 CPU 缓存慢。同时，它还防止 JVM 对程序的优化，这也会降低性能。
+Volatile 变量会对性能有一定的影响。因为 volatile 变量强制访问主存，而访问主存肯定被访问 CPU 缓存慢。同时，它还防止 JVM 对程序的优化，这也会降低性能。
 
 我们总能用 Volatile 变量来维护多线程之间的数据一致性吗？
 非常不幸，这是不行的。当多个线程读写同一个变量时，仅仅靠 volatile 是不足以保证一致性的，考虑下面这个 UnsafeCounter 类：
@@ -205,16 +203,16 @@ JVM 永远不会转换为如下的顺序：
 测试如下：
 
     public class UnsafeCounterTest {
-      <a href='http://www.jobbole.com/members/madao'>@Test</a>
+   
       public void testUnsafeCounter() throws InterruptedException {
         UnsafeCounter unsafeCounter = new UnsafeCounter();
-        Thread first = new Thread(() -&gt; {
-          for (int i = 0; i &lt; 5; i++) { 
+        Thread first = new Thread(() -> {
+          for (int i = 0; i < 5; i++) { 
             unsafeCounter.inc();
           }
         });
-        Thread second = new Thread(() -&gt; {
-          for (int i = 0; i &lt; 5; i++) {
+        Thread second = new Thread(() -> {
+          for (int i = 0; i < 5; i++) {
             unsafeCounter.dec();
           }
         });
@@ -281,5 +279,4 @@ JVM 永远不会转换为如下的顺序：
 
 我个人的选择是使用 AtomicInteger，因为 synchronized 只允许一个线程访问 inc/get/get 方法，对性能影响较大。
 
-我注意到采用 Synchronized 的版本并没有将计数器标识为 volatile，难道这意味着……?
-对的。使用 synchronized 关键字也会在语句之间建立 happens-before 关系。进入一个同步方法或块时，会将之前的语句和该方法或块内部的语句建立 happens-before 关系。
+我注意到采用 Synchronized 的版本并没有将计数器标识为 volatile,使用 synchronized 关键字也会在语句之间建立 happens-before 关系。进入一个同步方法或块时，会将之前的语句和该方法或块内部的语句建立 happens-before 关系。
