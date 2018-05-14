@@ -1,6 +1,6 @@
 ---
 layout: post
-published: false
+published: true
 title: Java 多线程：volatile 变量、happens-before 关系及内存一致性
 ---
 ## 概要
@@ -45,12 +45,12 @@ volatile 关键字的典型使用场景是在多线程环境下，多个线程�
 
       public void testProduceConsume() throws InterruptedException {
         ProducerConsumer producerConsumer = new ProducerConsumer();
-        List&lt;String&gt; values = Arrays.asList(&quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;,
-            &quot;9&quot;, &quot;10&quot;, &quot;11&quot;, &quot;12&quot;, &quot;13&quot;);
-        Thread writerThread = new Thread(() -&gt; values.stream()
+        List<String> values = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8",
+            "9", "10", "11", "12", "13");
+        Thread writerThread = new Thread(() -> values.stream()
             .forEach(producerConsumer::produce));
-        Thread readerThread = new Thread(() -&gt; {
-          for (int i = 0; i &gt; values.size(); i++) {
+        Thread readerThread = new Thread(() -> {
+          for (int i = 0; i < values.size(); i++) {
             producerConsumer.consume();
           }
         });
