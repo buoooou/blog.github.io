@@ -151,15 +151,12 @@ FOLLOWING：leader已经选举出来，当前Server与之同步
 
 4.收到所有Server回复以后，就计算出zxid最大的那个Server，并将这个Server相关信息设置成下一次要投票的Server； 
 
-5.线程将当前zxid最大的Server设置为当前Server要推荐的Leader，如果此时获胜的Server获得n/2 + 1的Server票数，设置当前推荐的leader为获胜的Server，将根据获胜的Server相关信息设置自己的状态，否则，继续这个过程，直到leader被选举出来。 通过流程分析我们可以得出：要使Leader获得多数Server的支持，则Server总数必须是奇数2n+1，且存活的Server的数目不得少于n+1. 每个Server启动后都会重复以上流程。在恢复模式下，如果是刚从崩溃状态恢复的或者刚启动的server还会从磁盘快照中恢复数据和会话信息，zk会记录事务日志并定期进行快照，方便在恢复时进行状态恢复。选主的具体流程图所示： 
-
-<ignore_js_op> 
+5.线程将当前zxid最大的Server设置为当前Server要推荐的Leader，如果此时获胜的Server获得n/2 + 1的Server票数，设置当前推荐的leader为获胜的Server，将根据获胜的Server相关信息设置自己的状态，否则，继续这个过程，直到leader被选举出来。 通过流程分析我们可以得出：要使Leader获得多数Server的支持，则Server总数必须是奇数2n+1，且存活的Server的数目不得少于n+1. 每个Server启动后都会重复以上流程。在恢复模式下，如果是刚从崩溃状态恢复的或者刚启动的server还会从磁盘快照中恢复数据和会话信息，zk会记录事务日志并定期进行快照，方便在恢复时进行状态恢复。
 
 ### 7.3.Zookeeper选主流程（fast paxos）
 
 fast paxos流程是在选举过程中，某Server首先向所有Server提议自己要成为leader，当其它Server收到提议以后，解决epoch和 zxid的冲突，并接受对方的提议，然后向对方发送接受提议完成的消息，重复这个流程，最后一定能选举出Leader。
 
-<ignore_js_op> 
 
 ### 7.4.Zookeeper同步流程
 
@@ -175,7 +172,7 @@ fast paxos流程是在选举过程中，某Server首先向所有Server提议自�
 
 5 .Follower收到uptodate消息后，又可以重新接受client的请求进行服务了。
 
-<ignore_js_op> 
+
 
 ### 7.5.Zookeeper工作流程-Leader
 
@@ -193,7 +190,7 @@ ACK消息是 Follower的对提议的回复，超过半数的Follower通过，则
 
 REVALIDATE消息是用来延长SESSION有效时间。
 
-<ignore_js_op> 
+
 
 ### 7.6.Zookeeper工作流程-Follower
 
