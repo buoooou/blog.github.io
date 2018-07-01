@@ -1,6 +1,6 @@
 ---
 layout: post
-published: false
+published: true
 title: Zookeeper简述
 ---
 ## 1.ZooKeeper是什么？
@@ -88,7 +88,7 @@ ZooKeeper是一个分布式的，开放源码的分布式应用程序协调服�
 第二类，和分布式锁服务中的控制时序场景基本原理一致，入列有编号，出列按编号。
 
 
-11.分布式与数据复制 
+## 4.分布式与数据复制 
 
 Zookeeper作为一个集群提供一致的数据服务，自然，它要在所有机器间做数据复制。数据复制的好处： 
 
@@ -106,31 +106,32 @@ Zookeeper作为一个集群提供一致的数据服务，自然，它要在所�
 
 对zookeeper来说，它采用的方式是写任意。通过增加机器，它的读吞吐能力和响应能力扩展性非常好，而写，随着机器的增多吞吐能力肯定下降（这也是它建立observer的原因），而响应能力则取决于具体实现方式，是延迟复制保持最终一致性，还是立即复制快速响应。
 
-12.Zookeeper角色描述
+## 5.Zookeeper角色描述
 
 ![184622zzinniurv0v1tn8i.png]({{site.baseurl}}/img/184622zzinniurv0v1tn8i.png)
 
-14.Zookeeper设计目的
+## 6.Zookeeper设计目的
 
-1.最终一致性：client不论连接到哪个Server，展示给它都是同一个视图，这是zookeeper最重要的性能。 
+- 最终一致性：client不论连接到哪个Server，展示给它都是同一个视图，这是zookeeper最重要的性能。 
+- 
+- 可靠性：具有简单、健壮、良好的性能，如果消息被到一台服务器接受，那么它将被所有的服务器接受。 
+- 
+- 实时性：Zookeeper保证客户端将在一个时间间隔范围内获得服务器的更新信息，或者服务器失效的信息。但由于网络延时等原因，Zookeeper不能保证两个客户端能同时得到刚更新的数据，如果需要最新数据，应该在读数据之前调用sync()接口。 
+- 
+- 等待无关（wait-free）：慢的或者失效的client不得干预快速的client的请求，使得每个client都能有效的等待。 
+- 
+- 原子性：更新只能成功或者失败，没有中间状态。 
+- 
+- 顺序性：包括全局有序和偏序两种：全局有序是指如果在一台服务器上消息a在消息b前发布，则在所有Server上消息a都将在消息b前被发布；偏序是指如果一个消息b在消息a后被同一个发送者发布，a必将排在b前面。
 
-2.可靠性：具有简单、健壮、良好的性能，如果消息被到一台服务器接受，那么它将被所有的服务器接受。 
 
-3.实时性：Zookeeper保证客户端将在一个时间间隔范围内获得服务器的更新信息，或者服务器失效的信息。但由于网络延时等原因，Zookeeper不能保证两个客户端能同时得到刚更新的数据，如果需要最新数据，应该在读数据之前调用sync()接口。 
-
-4.等待无关（wait-free）：慢的或者失效的client不得干预快速的client的请求，使得每个client都能有效的等待。 
-
-5.原子性：更新只能成功或者失败，没有中间状态。 
-
-6.顺序性：包括全局有序和偏序两种：全局有序是指如果在一台服务器上消息a在消息b前发布，则在所有Server上消息a都将在消息b前被发布；偏序是指如果一个消息b在消息a后被同一个发送者发布，a必将排在b前面。 
-
-15.Zookeeper工作原理
+## 7.Zookeeper工作原理
 
 Zookeeper 的核心是原子广播，这个机制保证了各个Server之间的同步。实现这个机制的协议叫做Zab协议。Zab协议有两种模式，它们分别是恢复模式（选主）和广播模式（同步）。当服务启动或者在领导者崩溃后，Zab就进入了恢复模式，当领导者被选举出来，且大多数Server完成了和 leader的状态同步以后，恢复模式就结束了。状态同步保证了leader和Server具有相同的系统状态。 
 
 为了保证事务的顺序一致性，zookeeper采用了递增的事务id号（zxid）来标识事务。所有的提议（proposal）都在被提出的时候加上了zxid。实现中zxid是一个64位的数字，它高32位是epoch用来标识leader关系是否改变，每次一个leader被选出来，它都会有一个新的epoch，标识当前属于那个leader的统治时期。低32位用于递增计数。
 
-16.Zookeeper 下 Server工作状态
+### 7.1.Zookeeper 下 Server工作状态
 
 每个Server在工作过程中有三种状态： 
 
@@ -138,7 +139,7 @@ LOOKING：当前Server不知道leader是谁，正在搜寻
 LEADING：当前Server即为选举出来的leader
 FOLLOWING：leader已经选举出来，当前Server与之同步
 
-17.Zookeeper选主流程(basic paxos)
+### 7.2.Zookeeper选主流程(basic paxos)
 
 当leader崩溃或者leader失去大多数的follower，这时候zk进入恢复模式，恢复模式需要重新选举出一个新的leader，让所有的Server都恢复到一个正确的状态。Zk的选举算法有两种：一种是基于basic paxos实现的，另外一种是基于fast paxos算法实现的。系统默认的选举算法为fast paxos。
 
@@ -154,13 +155,13 @@ FOLLOWING：leader已经选举出来，当前Server与之同步
 
 <ignore_js_op> 
 
-18.Zookeeper选主流程（fast paxos）
+### 7.3.Zookeeper选主流程（fast paxos）
 
 fast paxos流程是在选举过程中，某Server首先向所有Server提议自己要成为leader，当其它Server收到提议以后，解决epoch和 zxid的冲突，并接受对方的提议，然后向对方发送接受提议完成的消息，重复这个流程，最后一定能选举出Leader。
 
 <ignore_js_op> 
 
-19.Zookeeper同步流程
+### 7.4.Zookeeper同步流程
 
 选完Leader以后，zk就进入状态同步过程。 
 
@@ -176,7 +177,7 @@ fast paxos流程是在选举过程中，某Server首先向所有Server提议自�
 
 <ignore_js_op> 
 
-20.Zookeeper工作流程-Leader
+### 7.5.Zookeeper工作流程-Leader
 
 1 .恢复数据； 
 
@@ -194,9 +195,9 @@ REVALIDATE消息是用来延长SESSION有效时间。
 
 <ignore_js_op> 
 
-21.Zookeeper工作流程-Follower
+### 7.6.Zookeeper工作流程-Follower
 
-Follower主要有四个功能： 
+**Follower主要有四个功能：**
 
 1.向Leader发送请求（PING消息、REQUEST消息、ACK消息、REVALIDATE消息）； 
 
@@ -207,7 +208,7 @@ Follower主要有四个功能：
 4.返回Client结果。 
 
 
-Follower的消息循环处理如下几种来自Leader的消息： 
+**Follower的消息循环处理如下几种来自Leader的消息：**
 
 1 .PING消息： 心跳消息； 
 
