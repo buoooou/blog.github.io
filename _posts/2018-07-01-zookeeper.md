@@ -162,7 +162,8 @@ fast paxos流程是在选举过程中，某Server首先向所有Server提议自�
 
 选完Leader以后，zk就进入状态同步过程。 
 
-1. Leader等待server连接； 
+
+1 .Leader等待server连接；
 
 2 .Follower连接leader，将最大的zxid发送给leader； 
 
