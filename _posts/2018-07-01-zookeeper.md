@@ -196,13 +196,13 @@ REVALIDATE消息是用来延长SESSION有效时间。
 
 **Follower主要有四个功能：**
 
-1.向Leader发送请求（PING消息、REQUEST消息、ACK消息、REVALIDATE消息）； 
+1 .向Leader发送请求（PING消息、REQUEST消息、ACK消息、REVALIDATE消息）； 
 
-2.接收Leader消息并进行处理； 
+2 .接收Leader消息并进行处理； 
 
-3.接收Client的请求，如果为写请求，发送给Leader进行投票；
+3 .接收Client的请求，如果为写请求，发送给Leader进行投票；
 
-4.返回Client结果。 
+4 .返回Client结果。 
 
 
 **Follower的消息循环处理如下几种来自Leader的消息：**
