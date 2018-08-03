@@ -57,29 +57,16 @@ Spark集群部署后，需要在主节点和从节点分别启动Master进程和
 **基本概念：**
 
 1. Application =>Spark的应用程序，包含一个Driver program和若干Executor
-1. 
 1. SparkContext => Spark应用程序的入口，负责调度各个运算资源，协调各个Worker Node上的Executor
-1. 
 1. Driver Program => 运行Application的main()函数并且创建SparkContext
-1. 
 1. Executor => 是为Application运行在Worker node上的一个进程，该进程负责运行Task，并且负责将数据存在内存或者磁盘上。每个Application都会申请各自的Executor来处理任务
-1. 
 1. Cluster Manager =>在集群上获取资源的外部服务 (例如：Standalone、Mesos、Yarn)
-1. 
 1. Worker Node => 集群中任何可以运行Application代码的节点，运行一个或多个Executor进程
-1. 
 1. Task => 运行在Executor上的工作单元
-1. 
 1. Job => SparkContext提交的具体Action操作，常和Action对应
-1. 
 1. Stage => 每个Job会被拆分很多组task，每组任务被称为Stage，也称TaskSet
-1. 
 1. RDD => 是Resilient distributed datasets的简称，中文为弹性分布式数据集;是Spark最核心的模块和类
-1. 
 1. DAGScheduler => 根据Job构建基于Stage的DAG，并提交Stage给TaskScheduler
-1. 
-1. TaskScheduler => 将Taskset提交给Worker node集群运行并返回结果
-1. 
+1. TaskScheduler => 将Taskset提交给Worker node集群运行并返回结果 
 1. Transformations => 是Spark API的一种类型，Transformation返回值还是一个RDD，所有的Transformation采用的都是懒策略，如果只是将Transformation提交是不会执行计算的
-1. 
 1. Action => 是Spark API的一种类型，Action返回值不是一个RDD，而是一个scala集合；计算只有在Action被提交的时候计算才被触发。
