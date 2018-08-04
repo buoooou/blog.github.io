@@ -70,3 +70,5 @@ Spark集群部署后，需要在主节点和从节点分别启动Master进程和
 1. TaskScheduler => 将Taskset提交给Worker node集群运行并返回结果 
 1. Transformations => 是Spark API的一种类型，Transformation返回值还是一个RDD，所有的Transformation采用的都是懒策略，如果只是将Transformation提交是不会执行计算的
 1. Action => 是Spark API的一种类型，Action返回值不是一个RDD，而是一个scala集合；计算只有在Action被提交的时候计算才被触发。
+
+
