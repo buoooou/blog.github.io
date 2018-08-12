@@ -71,6 +71,11 @@ Spark集群部署后，需要在主节点和从节点分别启动Master进程和
 1. Transformations => 是Spark API的一种类型，Transformation返回值还是一个RDD，所有的Transformation采用的都是懒策略，如果只是将Transformation提交是不会执行计算的
 1. Action => 是Spark API的一种类型，Action返回值不是一个RDD，而是一个scala集合；计算只有在Action被提交的时候计算才被触发。
 
+**Spark核心概念之Jobs / Stage**
+
+Job => 包含多个task的并行计算，一个action触发一个job
+
+stage => 一个job会被拆为多组task，每组任务称为一个stage，以shuffle进行划分
 
 **Spark 资源调优**
 
@@ -83,7 +88,5 @@ Executor的内存主要分为三块：
 第三块是让RDD持久化时使用，默认占Executor总内存的60%。
 
 每个task以及每个executor占用的内存需要分析一下。每个task处理一个partiiton的数据，分片太少，会造成内存不够。
-
-其他资源配置：
 
 
