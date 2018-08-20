@@ -89,4 +89,3 @@ Executor的内存主要分为三块：
 
 每个task以及每个executor占用的内存需要分析一下。每个task处理一个partiiton的数据，分片太少，会造成内存不够。
 
-
