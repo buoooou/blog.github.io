@@ -4,7 +4,7 @@
 # baseurl is the website's URL without the hostname
 
 # If you are building a simple GitHub user page (http://username.github.io) then use these settings:
-url: "http://fengxiaoxiao921112.github.io/blog.github.io"
+url: "http://buoooou.github.io/blog.github.io"
 baseurl: "/blog.github.io"
 
 # If you are building a GitHub project page then use these settings:
@@ -14,10 +14,10 @@ baseurl: "/blog.github.io"
 # Of course don't forget to change the username and projectname to YOUR username and project
 
 # Name of website
-title: 风萧萧 个人博客
+title: buoooou 个人博客
 
 # Short description of your site
-description: welcome to fengxiaoxiao blog
+description: welcome to buoooou blog
 
 # --- Navigation bar options --- #
 
@@ -25,8 +25,8 @@ description: welcome to fengxiaoxiao blog
 navbar-links:
   About Me: "aboutme"
   Resources:
-    - weibo Pages: "http://weibo.com/"
-    - github Pages: "https://github.com/fengxiaoxiao921112"
+    - weibo Pages: "https://weibo.com/u/2814597494"
+    - github Pages: "https://github.com/buoooou"
 
 # Image to show in the navigation bar - image must be a square (width = height)
 # Remove this parameter if you don't want an image in the navbar
@@ -44,7 +44,7 @@ author:
   name: Some Person
   email: "769329489@qq.com"
   facebook: fengxiaoxiao921112  # eg. daattali
-  github: fengxiaoxiao921112    # eg. daattali
+  github: buoooou    # eg. daattali
   twitter: fengxiaoxiao921112   # eg. daattali
   reddit: fengxiaoxiao921112    # eg. daattali
   google-plus: +fengxiaoxiao921112   # eg. +DeanAttali or 109424658772469020925
@@ -84,7 +84,7 @@ share-links-active:
 
 # How to display the link to the website in the footer
 # Remove this if you don't want a link in the footer
-url-pretty: "fengxiaoxiao921112/blog.github.io"  # eg. "deanattali.com/beautiful-jekyll"
+url-pretty: "buoooou/blog.github.io"  # eg. "deanattali.com/beautiful-jekyll"
 
 # --- Misc --- #
 # Fill in your Disqus shortname (NOT the userid) if you want to support Disqus comments
